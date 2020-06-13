@@ -29,7 +29,7 @@
 	let drawDebug = false
 	let starMinSpeed = 1
 	let starMaxSpeed = 3
-	let worldSpeed = 0.3
+	let worldSpeed = 0.15
 	let maxConnectionStars // based on CONNECTION_STAR_PER_PX_SQUARED
 
 	const configure = () => {
