@@ -8,24 +8,29 @@
 	const canvas = document.getElementById("stars")
 	const ctx = canvas.getContext("2d")
 
-	const STAR_RADIUS = 2
-	let MAX_CONNECTION_STARS = 7
-	const MIN_CONNECTION_RADIUS = 300
-	const MAX_CONNECTION_RADIUS = 900
-	const FADE_OUT_PADDING = 100
-	let SPEED = 0.05
-	const STAR_SPAWN_INTERVAL = 1000
-	const N_IMMEDIATE_SPAWNS = 100
-	const COLORS = ["255,255,255", "0,255,255", "255,0,0", "100,30,255", "25, 60, 200", "100,0,0"]
-
-	const stars = []
-	window.stars = stars
+	let lastT = 0
+	let scale, left, right, bottom, top
 	let nStars = 0
 	let nConnectionStars = 0
 	let nLines = 0
-	let drawDebug = true
+	const stars = []
 
-	let scale, left, right, bottom, top
+	const STAR_RADIUS = 1
+	const CONNECTION_STAR_PER_PX_SQUARED = 400000
+	const MIN_CONNECTION_RADIUS = 100
+	const MAX_CONNECTION_RADIUS = 300
+	const FADE_OUT_PADDING = 100
+	const STAR_SPAWN_INTERVAL = 1000
+	const N_IMMEDIATE_SPAWNS = Math.floor((window.innerWidth * window.innerHeight) / 4500)
+
+	// const COLORS = ["255,255,255", "0,255,255", "255,0,0", "100,30,255", "25, 60, 200", "100,0,0"]
+	const COLORS = ["255,255,255"]
+	let maximumStarPopulation = 1000
+	let drawDebug = false
+	let starMinSpeed = 1
+	let starMaxSpeed = 3
+	let worldSpeed = 0.3
+	let maxConnectionStars // based on CONNECTION_STAR_PER_PX_SQUARED
 
 	const configure = () => {
 		const box = canvas.getBoundingClientRect()
@@ -34,6 +39,8 @@
 		scale = window.devicePixelRatio || 1
 		canvas.width = Math.floor(width * scale)
 		canvas.height = Math.floor(height * scale)
+
+		maxConnectionStars = Math.max(3, Math.floor((canvas.width * canvas.height) / CONNECTION_STAR_PER_PX_SQUARED))
 
 		left = 0
 		right = canvas.width
@@ -44,18 +51,23 @@
 		ctx.scale(scale, scale)
 	}
 
-	const addStar = ({px, py, vx = randomUpOrDown(10, 1), vy = randomUpOrDown(10, 1), connectionRadius}) => {
+	const addStar = ({px, py, vx = generateStarSpeed(), vy = generateStarSpeed(), connectionRadius}) => {
 		stars.push({px, py, vx, vy, connectionRadius, color: COLORS.length === 1 ? COLORS[0] : COLORS[Math.floor(Math.random() * COLORS.length)]})
 		nStars++
 	}
 
-	const draw = () => {
+	let showKeyboardShortcuts = false
+	const secretKeyboardShortcutLines = secretKeyboardShortcuts.toString().split("\n")
+	const draw = (t) => {
+		const deltaT = t - lastT
+		const lagModifier = deltaT / 16.67
+
 		nLines = 0
 		canvas.width = canvas.width
 		for (let i = nStars - 1; i >= 0; i--) {
 			const star = stars[i]
-			star.px += star.vx * SPEED
-			star.py += star.vy * SPEED
+			star.px += star.vx * worldSpeed * lagModifier
+			star.py += star.vy * worldSpeed * lagModifier
 
 			// remove from loop if out of bounds
 			if (star.px + STAR_RADIUS > right || star.px - STAR_RADIUS < left || star.py + STAR_RADIUS > bottom || star.py - STAR_RADIUS < top) {
@@ -88,7 +100,7 @@
 			ctx.beginPath()
 			ctx.arc(star.px, star.py, STAR_RADIUS, 0, 2 * Math.PI)
 
-			// ctx.fillStyle = `rgba(255,255,255,${alpha})`
+			alpha = alpha * lagModifier
 			ctx.fillStyle = `rgba(${star.color},${alpha})`
 			star.alpha = alpha
 			ctx.fill()
@@ -97,7 +109,8 @@
 				for (let i2 = nStars - 1; i2 >= 0; i2--) {
 					const star2 = stars[i2]
 					if (star2.px < star.px + star.connectionRadius && star2.px > star.px - star.connectionRadius && star2.py > star.py - star.connectionRadius && star2.py < star.py + star.connectionRadius) {
-						star.connectionOpacity = Math.min(1, (star.connectionOpacity || 0) + 0.0005)
+						star.connectionOpacity = Math.min(1, (star.connectionOpacity || 0) + 0.0005 * lagModifier)
+
 						const dx = star.px - star2.px
 						const dy = star.py - star2.py
 						const dt = Math.sqrt(dx * dx + dy * dy)
@@ -116,27 +129,37 @@
 			}
 		}
 
-		if (drawDebug) {
+		if (showKeyboardShortcuts || drawDebug) {
+			ctx.font = "12px monospace"
 			ctx.fillStyle = "white"
-			ctx.fillText(`${canvas.width}x${canvas.height}x${scale} SPEED=${SPEED}. ${nStars} stars total, including ${nConnectionStars} connection stars (max ${MAX_CONNECTION_STARS}) with ${nLines} active connections. Approx. ops/frame: ${nStars * (1 + nConnectionStars)}`, 12, 12)
 		}
+
+		if (drawDebug) {
+			ctx.fillText(`${canvas.width}x${canvas.height}@${scale} at ~${(60 / lagModifier).toFixed(2)}FPS. ${nStars}/${maximumStarPopulation} stars total, including ${nConnectionStars}/${maxConnectionStars} connectors with ${nLines} active connections, spawning stars with speeds between ${starMinSpeed} - ${starMaxSpeed} (global: ${worldSpeed}). ~ops./frame: ${nStars * (1 + nConnectionStars)}`, 12, 12)
+		}
+
+		if (showKeyboardShortcuts) for (let i = 0, y = 12 * 3; i < secretKeyboardShortcutLines.length; i++, y += 12) ctx.fillText(secretKeyboardShortcutLines[i], 12, y)
+
+		lastT = t
 
 		requestAnimationFrame(draw)
 	}
 
-	const randomUpOrDown = (max, min) => {
+	const generateStarSpeed = (max = starMaxSpeed, min = starMinSpeed) => {
 		const number = Math.floor(Math.random() * max) + min
 		return Math.random() > 0.5 ? number : -number
 	}
 
-	const addConnectionStar = ({px, py, vx = randomUpOrDown(10, 1), vy = randomUpOrDown(10, 1)}) => {
+	const addConnectionStar = ({px, py, vx = generateStarSpeed(), vy = generateStarSpeed()}) => {
 		addStar({px, py, vx, vy, connectionRadius: Math.random() * (MAX_CONNECTION_RADIUS - MIN_CONNECTION_RADIUS) + MIN_CONNECTION_RADIUS})
 		nConnectionStars++
 	}
 
-	const addFirstConnectionStar = () => addConnectionStar({px: canvas.width / 2, py: canvas.height / 2, vx: 0, vy: -1})
+	const addFirstConnectionStar = () => addConnectionStar({px: canvas.width / 2, py: canvas.height / 2})
 
 	const spawnTick = () => {
+		if (nStars >= maximumStarPopulation) return
+
 		if (nConnectionStars === 0) {
 			addFirstConnectionStar()
 		} else {
@@ -148,7 +171,7 @@
 					const px = star.px
 					const py = star.py
 
-					if (nConnectionStars < MAX_CONNECTION_STARS) {
+					if (nConnectionStars < maxConnectionStars) {
 						if (star.alpha >= 1) addConnectionStar({px, py})
 					} else {
 						addStar({px, py})
@@ -163,7 +186,7 @@
 		addFirstConnectionStar()
 
 		// add extra connection stars
-		while (nConnectionStars < MAX_CONNECTION_STARS) addConnectionStar({px: Math.floor(canvas.width * Math.random()), py: Math.floor(canvas.height * Math.random())})
+		while (nConnectionStars < maxConnectionStars) addConnectionStar({px: Math.floor(canvas.width * Math.random()), py: Math.floor(canvas.height * Math.random())})
 
 		// add more random stars
 		for (let i = 0; i < N_IMMEDIATE_SPAWNS; i++) addStar({px: Math.floor(canvas.width * Math.random()), py: Math.floor(canvas.height * Math.random())})
@@ -173,15 +196,72 @@
 	start()
 	setInterval(spawnTick, STAR_SPAWN_INTERVAL)
 	requestAnimationFrame(draw)
-	window.addEventListener("resize", configure)
 
-	window.addEventListener("keypress", (e) => {
-		if (e.key === "i") SPEED = SPEED - 0.02
-		if (e.key === "o") SPEED = SPEED + 0.02
-		if (e.key === "j") MAX_CONNECTION_STARS--
-		if (e.key === "k") MAX_CONNECTION_STARS++
+	let lastWidth = window.innerWidth,
+		lastHeight = window.innerHeight
+
+	window.addEventListener("resize", () => {
+		const newWidth = window.innerWidth
+		if (newWidth !== lastWidth) {
+			for (let i = nStars - 1; i >= 0; i--) {
+				const star = stars[i]
+				const xDiff = newWidth - lastWidth
+				star.px += xDiff / 2
+			}
+			lastWidth = newWidth
+			configure()
+		}
+
+		const newHeight = window.innerHeight
+		if (newHeight !== lastHeight) {
+			for (let i = nStars - 1; i >= 0; i--) {
+				const star = stars[i]
+				const yDiff = newHeight - lastHeight
+				star.py += yDiff / 2
+			}
+			lastHeight = newHeight
+			configure()
+		}
+	})
+
+	function secretKeyboardShortcuts(e) {
+		// You found the secret keyboard shortcuts!
+		if (e.key === "F1") showKeyboardShortcuts = !showKeyboardShortcuts
+
+		// Control speed
+		if (e.key === "i") worldSpeed = worldSpeed - 0.1
+		if (e.key === "o") worldSpeed = worldSpeed + 0.1
+		if (e.key === "=") starMaxSpeed += 0.1
+		if (e.key === "-") starMaxSpeed -= 0.1
+		if (e.key === "]") starMinSpeed += 1
+		if (e.key === "[") starMinSpeed -= 1
+
+		// Control connections
+		if (e.key === "j") maxConnectionStars--
+		if (e.key === "k") maxConnectionStars++
+		if (e.key === "x") maximumStarPopulation = Infinity
+
+		// Misc.
 		if (e.key === "d") drawDebug = !drawDebug
 		if (e.key === "h") document.querySelector("main").hidden = !document.querySelector("main").hidden
+	}
+
+	window.addEventListener("keydown", secretKeyboardShortcuts)
+
+	window.addEventListener("keydown", function keys(e) {
+		// Fullscreen
+		if (e.key === "f") {
+			if (document.fullscreen) {
+				document.exitFullscreen()
+			} else {
+				canvas.requestFullscreen().then(() => {
+					stars.splice(1, nStars)
+					nStars = 0
+					addFirstConnectionStar()
+					configure()
+				})
+			}
+		}
 	})
 
 	document.querySelector("main").hidden = location.hash === "#background"

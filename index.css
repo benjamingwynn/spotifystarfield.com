@@ -77,6 +77,7 @@ main article code {
 }
 
 main article code {
+	white-space: pre-wrap;
 	display: block;
 	overflow: auto;
 	background: #222;
