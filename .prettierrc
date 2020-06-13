@@ -1,0 +1,12 @@
+{
+	"trailingComma": "es5",
+	"tabWidth": 4,
+	"semi": false,
+	"singleQuote": false,
+	"bracketSpacing": false,
+	"arrowParens": "always",
+	"endOfLine": "lf",
+	"insertPragma": true,
+	"useTabs": true,
+	"printWidth": 99999999
+}

@@ -1,0 +1,161 @@
+/** @format */
+
+body,
+html {
+	background: black;
+	height: 100%;
+	width: 100%;
+}
+
+canvas {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+}
+
+body,
+html,
+* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+	font-family: "RedAlert", monospace;
+	color: inherit;
+}
+
+*[hidden] {
+	display: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+main {
+	display: flex;
+	flex-flow: column nowrap;
+	justify-content: end;
+	height: 100%;
+	animation: in 0.5s 0s both;
+	padding: 0 2em;
+}
+
+@keyframes in {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+main article {
+	background: white;
+	display: block;
+	padding: 5%;
+	border-style: double;
+	border-width: 0.4em;
+	border-radius: 0.75em;
+	opacity: 0.8;
+}
+
+main article h1 {
+	font-size: 1.87em;
+	margin-bottom: 0.4em;
+}
+
+main article p,
+main article code {
+	margin-bottom: 1em;
+}
+
+main article code {
+	display: block;
+	overflow: auto;
+	background: #222;
+	color: white;
+	padding: 0.6em;
+	border-style: double;
+	border-color: silver;
+}
+
+main article code span {
+	color: white;
+	display: block;
+	font-family: monospace;
+	overflow-wrap: break-word;
+}
+
+/* After a certain size, rearrange tags and move to a fixed padding */
+/* @media screen and (min-width: 50em) { */
+main article {
+	padding: 2em;
+	max-width: 40em;
+	margin: auto;
+}
+
+#contact {
+	color: black;
+	background: white;
+	padding: 1em 1em;
+	border-style: double;
+	border-width: 0.4em;
+	border-radius: 0.75em;
+	opacity: 0.8;
+	display: flex;
+	flex-flow: column nowrap;
+	margin-bottom: 0.3em;
+}
+
+#contact a {
+	font-weight: bold;
+	font-size: 1.1em;
+}
+
+#contact-buttons {
+	display: flex;
+	flex-flow: column nowrap;
+	margin-top: 0.5em;
+}
+
+@media (min-width: 1050px) {
+	#contact {
+		width: 20em;
+		margin: 1em auto 1em 1em;
+		font-size: 1.1em;
+		flex-flow: column nowrap;
+	}
+
+	#contact a {
+		padding: 0.25em 0;
+	}
+}
+
+@media (max-width: 620px) {
+	#contact {
+		margin-top: 1em;
+	}
+
+	#contact-buttons {
+		flex-flow: column nowrap;
+	}
+
+	#contact a {
+		font-size: 1.3em;
+		padding: 0.2em 0;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	main article,
+	#contact {
+		filter: invert(1);
+	}
+}

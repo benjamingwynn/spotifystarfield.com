@@ -1,0 +1,11 @@
+@font-face {
+	font-family: 'RedAlert';
+	src: url('RedAlertBig.ttf') format('truetype');
+	font-weight: normal;
+}
+
+@font-face {
+	font-family: 'RedAlert';
+	src: url('RedAlertSmall.ttf') format('truetype');
+	font-weight: 100;
+}
