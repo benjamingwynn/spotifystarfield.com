@@ -5,6 +5,7 @@ html {
 	background: black;
 	height: 100%;
 	width: 100%;
+	animation: rainbow 10s both infinite;
 }
 
 canvas {
@@ -40,7 +41,8 @@ h6 {
 main {
 	display: flex;
 	flex-flow: column nowrap;
-	justify-content: end;
+	justify-content: flex-end;
+	align-items: flex-end;
 	height: 100%;
 	animation: in 0.5s 0s both;
 	padding: 0 2em;
@@ -59,11 +61,15 @@ main {
 main article {
 	background: white;
 	display: block;
-	padding: 5%;
 	border-style: double;
-	border-width: 0.4em;
+	border-width: 0.35em;
 	border-radius: 0.75em;
 	opacity: 0.8;
+
+	margin: auto auto 1em 0;
+	padding: 1em 1.2em;
+	width: 30em;
+	filter: invert(1);
 }
 
 main article h1 {
@@ -80,7 +86,7 @@ main article code {
 	white-space: pre-wrap;
 	display: block;
 	overflow: auto;
-	background: #222;
+	background: white;
 	color: white;
 	padding: 0.6em;
 	border-style: double;
@@ -92,14 +98,6 @@ main article code span {
 	display: block;
 	font-family: monospace;
 	overflow-wrap: break-word;
-}
-
-/* After a certain size, rearrange tags and move to a fixed padding */
-/* @media screen and (min-width: 50em) { */
-main article {
-	padding: 2em;
-	max-width: 40em;
-	margin: auto;
 }
 
 #contact {

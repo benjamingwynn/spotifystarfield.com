@@ -7,7 +7,7 @@
 		<meta tag="nositelinkssearchbox" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-		<title>Benjamin Gwynn</title>
+		<title>spotify.benjamingwynn.com</title>
 
 		<link rel="stylesheet" href="/font/RedAlert.css" />
 		<link rel="stylesheet" href="index.css" />
@@ -32,45 +32,19 @@
 	</head>
 	<body>
 		<canvas id="stars"></canvas>
-		<!-- <header>
-			<h1>Benjamin Gwynn</h1>
-		</header> -->
 		<main>
-			<article>
-				<h1>You find a note...</h1>
-				<!-- <p>I design and build (mostly web) software.</p> -->
-				<p>"Hi, I've been a professional web designer and developer since 2015, and am currently studying a BSc in Computer Science. I like making cool software, mostly based around the web.</p>
-
-				<p>Professionally, I've worked closely <a href="https://lyntonblack.net" target="noopener">with agencies</a>, <a target="noopener" href="https://capital-law.co.uk">established law firms</a> and <a href="https://lycheelabs.net/" target="noopener">independent game studios</a>.</p>
-
-				<p>I led the frontend development of the <a href="https://www.bigbrainmaths.com/demo-worksheet/substituting-numbers-into-formula-part-3/95/0/231" target="noopener">BigBrainMaths worksheet software</a> and single handedly built <a href="https://memehub.com" target="noopener">memehub</a> - a meme sharing website built as a progressive web application using an open source <a href="https://github.com/benjamingwynn/greenframe" target="noopener">framework I designed from scratch to address issues with building PWA's</a>.</p>
-
-				<p>I'm currently studying as a Computer Science undergraduate student at the University of Lincoln, where I continue to work on professional and academic projects, along with writing new hobby projects and uploading them to <a href="https://github.com/benjamingwynn">my Github</a>.</p>
-
-				<p>I am currently available for new jobs and opportunities, if you're interested in my work, please don't hesitate to contact me using the details provided.</p>
-
-				<p>- Benjamin"</p>
+			<article id="login">
+				<h1>Spotify visualizer written in Canvas</h1>
+				<h2>Written by Benjamin Gwynn</h2>
+				<p>Uses the Spotify audio analysis API to generate patterns using dots and lines. Login to Spotify here then use Spotify on another device or app.</p>
+				<a id="login" href="https://accounts.spotify.com/authorize?client_id=6ed539a873ed442fac572b7f679833a9&redirect_uri=http://127.0.01:5500&scope=user-read-playback-state%20user-read-private%20user-read-email&response_type=token&state=123">Login with Spotify!</a>
 			</article>
-
-			<div id="contact">
-				<p>Attached to the note you find links to various different places, pick an ACTION to continue...</p>
-				<div id="contact-buttons">
-					<a target="noopener" href="https://telegram.me/xenxier">1. REPLY using Telegram</a>
-					<a target="noopener" href="mailto:contact@benjamingwynn.com">2. EMAIL contact@benjamingwynn.com</a>
-					<a target="noopener" href="https://github.com/benjamingwynn">3. EXPLORE Github code</a>
-				</div>
-				<script>
-					const $$a = document.querySelectorAll("#contact a")
-					window.addEventListener("keypress", (e) => {
-						const p = parseInt(e.key)
-						if (!isNaN(p)) {
-							const $a = $$a[p - 1]
-							if ($a) window.open($a.href)
-						}
-					})
-				</script>
-			</div>
+			<article id="player">
+				<div id="player-meta">{song} - {artist}</div>
+				<div id="player-time">{current} / {end}</div>
+			</article>
 		</main>
 		<script src="./stars.js"></script>
+		<script src="./spotify.js"></script>
 	</body>
 </html>
