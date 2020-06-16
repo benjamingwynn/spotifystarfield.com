@@ -301,7 +301,7 @@ class Starfield extends XCanvas {
 		}
 
 		if (this.options.drawDebug) {
-			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (global: ${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 12, 12)
+			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (global: ${this.options.worldSpeed}}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 12, 12)
 		}
 
 		if (this.options.showKeyboardShortcuts) for (let i = 0, y = 48 * 3; i < this.secretKeyboardShortcutLines.length; i++, y += 12) this.ctx.fillText(this.secretKeyboardShortcutLines[i], 12, y)
@@ -493,13 +493,15 @@ class SpotifyStarfield extends Starfield {
 		return <SpotifyAnalysis>await this.spotify("/audio-analysis/" + trackId)
 	}
 
+	private pushSpeed = 1
+
 	private hitBeat(beat: SpotifyBeat) {
 		if (!this.nConnectionStars) return // bail if no connection stars
 		for (let i = 0; i < this.nConnectionStars; i++) {
 			const star = this.connectionStars[i]
 			const v = this.spotifyOptions.BEAT_STRENGTH * beat.confidence
-			star.extraSpeedY = star.vy > 0 ? v : -v // * star.vy
-			star.extraSpeedX = star.vx > 0 ? v : -v // * star.vx
+			star.extraSpeedY = this.pushSpeed * (star.vy > 0 ? v : -v) // * star.vyc
+			star.extraSpeedX = this.pushSpeed * (star.vx > 0 ? v : -v) // * star.vx
 			// console.log("beat", beat, star, star.extraSpeedY)
 			star.extraSpeedResistance = (1 - beat.duration) * this.spotifyOptions.BEAT_RESISTANCE
 		}
@@ -511,11 +513,12 @@ class SpotifyStarfield extends Starfield {
 
 	private newSection(section: SpotifySection) {
 		this.pallette = this.spotifyOptions.COLORS[section.key]
-		console.warn("Changed section", section, this.connectionRadiusProduct, 20 - section.loudness)
+		this.pushSpeed = Math.min(1.1, Math.max(0.9, Math.abs(-(section.loudness + 10) - 30) / 30))
+		console.warn("Changed section", section, this.connectionRadiusProduct, 20 - section.loudness, this.pushSpeed)
 	}
 
 	private newSegment(segment: SpotifySegment) {
-		this.connectionRadiusProduct = Math.max(0.2, Math.abs(-(segment.loudness_start + 10) - 30) / 30)
+		this.connectionRadiusProduct = Math.max(0.3, Math.abs(-(segment.loudness_start + 10) - 30) / 30)
 		this.spawnTick()
 	}
 
