@@ -453,8 +453,8 @@ class SpotifyStarfield extends Starfield {
 	private $playerMeta = $("#player-meta")
 	private $playerTime = $("#player-time")
 
-	private segment!: SpotifySegment
-	private section!: SpotifySection
+	private segment?: SpotifySegment
+	private section?: SpotifySection
 
 	private startTime: number = performance.now()
 	/** Current track ID. Undefined if not playing */
@@ -501,12 +501,12 @@ class SpotifyStarfield extends Starfield {
 	}
 
 	private newSection(section: SpotifySection) {
-		console.log("Changed section", section)
+		console.warn("Changed section", section)
 		this.pallette = this.spotifyOptions.COLORS[section.key]
 	}
 
 	private newSegment(segment: SpotifySegment) {
-		console.log("Changed segment", segment)
+		console.log("Changed segment", JSON.stringify(segment, null, 4))
 		this.connectionRadiusProduct = 1 + Math.abs(segment.loudness_max) / 50
 		this.spawnTick()
 	}
@@ -546,6 +546,9 @@ class SpotifyStarfield extends Starfield {
 			let tatumIndex = tatums.findIndex((t) => t.start * 1000 >= track.progress_ms)
 			if (tatumIndex === -1) tatumIndex = 0
 
+			this.segment = undefined
+			this.section = undefined
+
 			console.log("All sections:", sections)
 
 			/** This fires every frame. It keeps `segment` and `section` in sync, and fires the `hitTatum` and `hitBeat` calls at the right time. */
@@ -576,7 +579,7 @@ class SpotifyStarfield extends Starfield {
 							}
 						}
 					}
-					if (changedSegment) this.newSegment(this.segment)
+					if (changedSegment && this.segment) this.newSegment(this.segment)
 
 					let changedSection = false
 					for (let i = 0; i < sections.length; i++) {
@@ -591,7 +594,7 @@ class SpotifyStarfield extends Starfield {
 							}
 						}
 					}
-					if (changedSection) this.newSection(this.section)
+					if (changedSection && this.section) this.newSection(this.section)
 				}
 
 				requestAnimationFrame(spotifyBeatKeeper)
