@@ -73,7 +73,7 @@ abstract class XCanvas {
 
 	private drawHook: FrameRequestCallback = (t: number) => {
 		const deltaT = t - this.lastT
-		if (t > this.lastFPSRead + 1000) {
+		if (t > this.lastFPSRead + 500) {
 			this.fps = (16.67 / deltaT) * 60
 			this.lastFPSRead = t
 		}
