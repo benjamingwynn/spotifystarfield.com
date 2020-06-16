@@ -136,14 +136,16 @@ class StarfieldOptions {
 	starMaxSpeed = 1.7
 	worldSpeed = 0.5
 	/** Number of connection stars per pixel on the screen. */
-	connectionStarPopulationDensity = 0.00002
+	connectionStarPopulationDensity = 0.000023
 	showKeyboardShortcuts = false
+	starPulseSpeed = 0.00045
 }
 
 class Starfield extends XCanvas {
 	maximumStarPopulation = Math.floor(window.innerHeight * window.innerWidth * this.options.starPopulationDensity)
 	maxConnectionStars = Math.floor(window.innerHeight * window.innerWidth * this.options.connectionStarPopulationDensity)
 	connectionRadiusProduct = 1
+	connectionRadiusProductActual = 1
 	nStars = 0
 	nConnectionStars = 0
 	nLines = 0
@@ -265,8 +267,11 @@ class Starfield extends XCanvas {
 
 			// let radius = star.connectionRadius
 			if (isConnectionStar(star)) {
+				if (this.connectionRadiusProduct > this.connectionRadiusProductActual) this.connectionRadiusProductActual += this.options.starPulseSpeed * this.options.worldSpeed * lagModifier
+				if (this.connectionRadiusProduct < this.connectionRadiusProductActual) this.connectionRadiusProductActual -= this.options.starPulseSpeed * this.options.worldSpeed * lagModifier
+
 				let radius = star.connectionRadius
-				radius = radius * this.connectionRadiusProduct
+				radius = radius * this.connectionRadiusProductActual
 				for (let i2 = this.nStars - 1; i2 >= 0; i2--) {
 					const star2 = this.stars[i2]
 					if (star2.px < star.px + radius && star2.px > star.px - radius && star2.py > star.py - radius && star2.py < star.py + radius) {
@@ -296,7 +301,7 @@ class Starfield extends XCanvas {
 		}
 
 		if (this.options.drawDebug) {
-			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} active connections, spawning stars with speeds between ${this.options.starMinSpeed} - ${this.options.starMaxSpeed} (global: ${this.options.worldSpeed}). ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 12, 12)
+			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (global: ${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 12, 12)
 		}
 
 		if (this.options.showKeyboardShortcuts) for (let i = 0, y = 48 * 3; i < this.secretKeyboardShortcutLines.length; i++, y += 12) this.ctx.fillText(this.secretKeyboardShortcutLines[i], 12, y)
@@ -425,8 +430,12 @@ interface SpotifyBeat {
 interface SpotifySegment {
 	start: number
 	loudness_max: number
+	loudness_max_time: number
+	loudness_start: number
+	loudness_end: number
 }
 interface SpotifySection {
+	loudness: number
 	start: number
 	key: number
 }
@@ -501,13 +510,12 @@ class SpotifyStarfield extends Starfield {
 	}
 
 	private newSection(section: SpotifySection) {
-		console.warn("Changed section", section)
 		this.pallette = this.spotifyOptions.COLORS[section.key]
+		console.warn("Changed section", section, this.connectionRadiusProduct, 20 - section.loudness)
 	}
 
 	private newSegment(segment: SpotifySegment) {
-		console.log("Changed segment", JSON.stringify(segment, null, 4))
-		this.connectionRadiusProduct = 1 + Math.abs(segment.loudness_max) / 50
+		this.connectionRadiusProduct = Math.max(0.2, Math.abs(-(segment.loudness_start + 10) - 30) / 30)
 		this.spawnTick()
 	}
 
@@ -553,6 +561,8 @@ class SpotifyStarfield extends Starfield {
 
 			/** This fires every frame. It keeps `segment` and `section` in sync, and fires the `hitTatum` and `hitBeat` calls at the right time. */
 			const spotifyBeatKeeper = () => {
+				if (track.item.id !== this.currentTrackID) return // escape this if changed
+
 				if (!this.paused) {
 					const progress_ms = track.progress_ms + (performance.now() - this.startTime)
 
