@@ -131,7 +131,7 @@ class StarfieldOptions {
 	FADE_OUT_PADDING = 100
 	// maximumStarPopulation = 200
 	starPopulationDensity = 0.000055
-	drawDebug = true
+	drawDebug = location.origin.includes(":") // 😉
 	starMinSpeed = 1.5
 	starMaxSpeed = 1.7
 	worldSpeed = 0.5
@@ -398,7 +398,8 @@ class Starfield extends XCanvas {
 class SpotifyStarfieldOptions {
 	BEAT_STRENGTH = 15
 	BEAT_RESISTANCE = 3
-	BEAT_MIN_CONFIDENCE = 0.45
+	BEAT_MIN_CONFIDENCE = 0.15
+	TATUM_MIN_CONFIDENCE = 0.45
 	COLORS = [
 		// 0 = C, 1 = C♯/D♭, 2 = D, and so on
 		["255,47,146", "255,49,148", "255,51,150"],
@@ -451,8 +452,10 @@ class SpotifyStarfield extends Starfield {
 	private spotifyOptions = new SpotifyStarfieldOptions()
 	private $playerMeta = $("#player-meta")
 	private $playerTime = $("#player-time")
+
 	private segment!: SpotifySegment
 	private section!: SpotifySection
+
 	private startTime: number = performance.now()
 	/** Current track ID. Undefined if not playing */
 	private currentTrackID?: string
@@ -493,23 +496,33 @@ class SpotifyStarfield extends Starfield {
 		}
 	}
 
+	private hitTatum(tatum: SpotifyTatum) {
+		this.spawnTick()
+	}
+
 	private newSection(section: SpotifySection) {
-		console.warn("Changed section", section)
+		console.log("Changed section", section)
 		this.pallette = this.spotifyOptions.COLORS[section.key]
 	}
+
 	private newSegment(segment: SpotifySegment) {
 		console.log("Changed segment", segment)
-		this.pallette = this.spotifyOptions.COLORS[this.section.key]
 		this.connectionRadiusProduct = 1 + Math.abs(segment.loudness_max) / 50
 		this.spawnTick()
 	}
 
 	private async newTrack(track: SpotifyTrack) {
-		const ttt = performance.now()
 		console.log("New track!", track)
 
 		applyTemplate(this.$playerMeta, {song: track.item.name, artist: track.item.artists[0].name})
+		await this.resync(track)
+	}
 
+	/** Copy of the current song progress. Just used to track if the user has gone backwards or not. */
+	private progress_ms = 0
+
+	private async resync(track: SpotifyTrack) {
+		const ttt = performance.now()
 		if (track.item.id) {
 			console.log("Getting analysis...")
 			const analysis = await this.getAnalysis(track.item.id)
@@ -519,55 +532,74 @@ class SpotifyStarfield extends Starfield {
 			track.progress_ms += performance.now() - ttt
 
 			// remove all of the items that are already used
-			const beats = analysis.beats.filter((beat: {start: number; confidence: number}) => track.progress_ms < beat.start * 1000 && beat.confidence > 0.15)
-			const tatums = analysis.tatums.filter((tatum: {start: number; confidence: number}) => track.progress_ms < tatum.start * 1000 && tatum.confidence > this.spotifyOptions.BEAT_MIN_CONFIDENCE)
-			const segments = analysis.segments.filter((segment: {start: number}) => track.progress_ms < segment.start * 1000)
-			const sections = analysis.sections.filter((section: {start: number}) => track.progress_ms < section.start * 1000)
+			const beats = analysis.beats.filter((beat) => beat.confidence > this.spotifyOptions.BEAT_MIN_CONFIDENCE)
+			const tatums = analysis.tatums.filter((tatum) => tatum.confidence > this.spotifyOptions.TATUM_MIN_CONFIDENCE)
+			const segments = analysis.segments
+			const sections = analysis.sections
 
 			// Init
 			this.startTime = performance.now()
-			this.segment = segments[0]
-			this.section = sections[0]
-			this.newSection(this.section)
 
-			// Keep
+			let beatIndex = beats.findIndex((b) => b.start * 1000 >= track.progress_ms)
+			if (beatIndex === -1) beatIndex = 0
+
+			let tatumIndex = tatums.findIndex((t) => t.start * 1000 >= track.progress_ms)
+			if (tatumIndex === -1) tatumIndex = 0
+
+			console.log("All sections:", sections)
+
+			/** This fires every frame. It keeps `segment` and `section` in sync, and fires the `hitTatum` and `hitBeat` calls at the right time. */
 			const spotifyBeatKeeper = () => {
 				if (!this.paused) {
 					const progress_ms = track.progress_ms + (performance.now() - this.startTime)
-					if (beats.length) {
-						if (progress_ms >= beats[0].start * 1000) {
-							const beat = beats[0]
-							beats.splice(0, 1)
-							this.hitBeat(beat)
+
+					if (beatIndex < beats.length && progress_ms >= beats[beatIndex].start * 1000) {
+						this.hitBeat(beats[beatIndex])
+						beatIndex++
+					}
+
+					if (tatumIndex < tatums.length && progress_ms >= tatums[tatumIndex].start * 1000) {
+						this.hitTatum(tatums[tatumIndex])
+						tatumIndex++
+					}
+
+					let changedSegment = false
+					for (let i = 0; i < segments.length; i++) {
+						const s = segments[i]
+						if (progress_ms >= s.start * 1000) {
+							if (!this.segment) {
+								this.segment = s
+								changedSegment = true
+							} else if (this.segment && s.start > this.segment.start) {
+								this.segment = s
+								changedSegment = true
+							}
 						}
 					}
+					if (changedSegment) this.newSegment(this.segment)
 
-					if (tatums.length) {
-						if (progress_ms >= tatums[0].start * 1000) {
-							const tatum = tatums[0]
-							tatums.splice(0, 1)
-							this.spawnTick()
+					let changedSection = false
+					for (let i = 0; i < sections.length; i++) {
+						const s = sections[i]
+						if (progress_ms >= s.start * 1000) {
+							if (!this.section) {
+								this.section = s
+								changedSection = true
+							} else if (this.section && s.start > this.section.start) {
+								this.section = s
+								changedSection = true
+							}
 						}
 					}
-
-					if (segments[0] && progress_ms >= segments[0].start * 1000) {
-						this.segment = segments[0]
-						segments.splice(0, 1)
-						this.newSegment(this.segment)
-					}
-
-					if (sections[0] && progress_ms >= sections[0].start * 1000) {
-						this.section = sections[0]
-						sections.splice(0, 1)
-						this.newSection(this.section)
-					}
-					if (!this.section) debugger
+					if (changedSection) this.newSection(this.section)
 				}
 
 				requestAnimationFrame(spotifyBeatKeeper)
 			}
 
 			requestAnimationFrame(spotifyBeatKeeper)
+			spotifyBeatKeeper()
+			// this.newSection(this.section)
 		}
 	}
 
@@ -575,6 +607,7 @@ class SpotifyStarfield extends Starfield {
 		const track = await this.spotify("/me/player")
 		if (!track) return
 
+		// update the UI
 		const current =
 			Math.floor(track.progress_ms / 1000 / 60) +
 			":" +
@@ -592,17 +625,19 @@ class SpotifyStarfield extends Starfield {
 		if (track.item.id !== this.currentTrackID) {
 			this.currentTrackID = track.item.id
 			await this.newTrack(track)
+		} else if (track.progress_ms < this.progress_ms) {
+			console.log("Went backwards in song, for all intents and purposes this is treated like a new song.")
+			await this.resync(track)
 		}
 
 		if (track.is_playing) {
-			// Start everything
-			// for (let i = 0; i < 50; i++) addStar({px: Math.random() * canvas.width, py: Math.random() * canvas.height})
 			this.addFirstConnectionStar()
 			this.paused = false
 		} else {
 			this.paused = true
-			//
 		}
+
+		this.progress_ms = track.progress_ms
 	}
 
 	public start() {
@@ -615,7 +650,6 @@ class SpotifyStarfield extends Starfield {
 			this.trackWatcher().then(() => {
 				$("#login").hidden = true
 			})
-		} else {
 		}
 	}
 }
