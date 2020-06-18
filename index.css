@@ -61,18 +61,25 @@ main {
 	}
 }
 
+#player {
+	min-width: 12em;
+	max-width: 90vw;
+	transition: all 0.3s;
+	display: flex;
+	flex-flow: column nowrap;
+}
+
 main article {
-	background: white;
+	padding: 1em 2em 1em 1.2em;
+	margin: auto auto 1em 0;
+	background: black;
+	color: rgba(255, 255, 255, 0.9);
+	border-color: rgba(255, 255, 255, 0.5);
 	display: block;
 	border-style: double;
 	border-width: 0.35em;
 	border-radius: 0.75em;
 	opacity: 0.8;
-
-	margin: auto auto 1em 0;
-	padding: 1em 1.2em;
-	width: 30em;
-	filter: invert(1);
 }
 
 main article h1 {
@@ -152,12 +159,5 @@ main article code span {
 	#contact a {
 		font-size: 1.3em;
 		padding: 0.2em 0;
-	}
-}
-
-@media (prefers-color-scheme: dark) {
-	main article,
-	#contact {
-		filter: invert(1);
 	}
 }

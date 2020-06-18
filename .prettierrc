@@ -8,5 +8,5 @@
 	"endOfLine": "lf",
 	"insertPragma": true,
 	"useTabs": true,
-	"printWidth": 99999999
+	"printWidth": 4000
 }

@@ -8,7 +8,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<meta http-equiv="origin-trial" content="Ah+Gaagvf2Hnk5yshbNHYwzWyzzOvn+CwpGU+2Fhn1mrmREEC3471tCy1W0rbYB+BSaS84UU6ewo1sQLXVAUMA4AAABbeyJvcmlnaW4iOiJodHRwczovL3Nwb3RpZnkuYmVuamFtaW5nd3lubi5jb206NDQzIiwiZmVhdHVyZSI6Ildha2VMb2NrIiwiZXhwaXJ5IjoxNTk0MTY2Mzk5fQ==" />
 
-		<title>spotify.benjamingwynn.com</title>
+		<title>Spotify Starfield</title>
 
 		<link rel="stylesheet" href="/font/RedAlert.css" />
 		<link rel="stylesheet" href="index.css" />
@@ -34,14 +34,15 @@
 	<body>
 		<main>
 			<article id="login">
-				<h1>Spotify visualizer written in Canvas</h1>
-				<h2>Written by Benjamin Gwynn</h2>
+				<h1>Spotify Starfield</h1>
+				<h2>Spotify visualizer written in Canvas</h2>
 				<p>Uses the Spotify audio analysis API to generate patterns using dots and lines. Login to Spotify here then use Spotify on another device or app.</p>
+				<h3><small>created by benjamin gwynn</small></h3>
 				<a id="login" href="https://accounts.spotify.com/authorize?client_id=6ed539a873ed442fac572b7f679833a9&redirect_uri=https%3A%2F%2Fspotify.benjamingwynn.com&scope=user-read-playback-state%20user-read-private%20user-read-email&response_type=token&state=123">Login with Spotify!</a>
 			</article>
 			<article id="player">
-				<div id="player-meta">{song} - {artist}</div>
-				<div id="player-time">{current} / {end}</div>
+				<span id="player-meta">{song} - {artist}</span>
+				<span id="player-time">{current} / {end}</span>
 			</article>
 		</main>
 		<script src="./stars.js"></script>
