@@ -48,5 +48,10 @@
 		</main>
 		<script src="./stars.js"></script>
 		<script src="./wakelock.js"></script>
+		<script>
+			document.querySelector("main").addEventListener("touchend", () => {
+				document.body.requestFullscreen()
+			})
+		</script>
 	</body>
 </html>
