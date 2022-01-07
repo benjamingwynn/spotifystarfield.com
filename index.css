@@ -13,6 +13,7 @@ canvas {
 	height: 100%;
 	position: absolute;
 	top: 0;
+	object-fit: cover;
 }
 
 body,

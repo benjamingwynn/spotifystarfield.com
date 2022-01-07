@@ -4,9 +4,13 @@ import XCanvas from "./XCanvas"
 import {$} from "./Utility"
 
 interface Star {
+	/** X position */
 	px: number
+	/** Y position */
 	py: number
+	/** base X velocity */
 	vx: number
+	/** base Y velocity */
 	vy: number
 	extraSpeedY: number
 	extraSpeedX: number
@@ -28,19 +32,19 @@ class StarfieldOptions {
 	STAR_RADIUS = 1
 	/** The minimum radius a connection star can reach another star. A random number will be picked between this and `maxConnectionRadius` */
 	minConnectionRadius = 60
-	maxConnectionRadius = 200
+	maxConnectionRadius = 160
 	/** Size around the canvas in pixels where stars will start to fade out. */
 	edgeSize = 100
 	/** Number of stars per pixels on the screen */
-	starPopulationDensity = 0.000055
+	starPopulationDensity = 0.000045
 	/** Whether debug information should be drawn on the screen. */
-	drawDebug = "lastIndexOf" in String.prototype ? location.origin.lastIndexOf(":") : location.origin.indexOf(":") !== 5 // draw if on HTTP, or if not on the default port
+	drawDebug = false
 	/** The minimum speed a star can be spawned with. */
-	starMinSpeed = 1.5
+	starMinSpeed = 1.2
 	/** The maximum speed the star can be spawned with. */
 	starMaxSpeed = 1.7
 	/** The world speed, should scale all animations evenly. */
-	worldSpeed = 0.5
+	worldSpeed = 0.2
 	/** The rate the world speed changes at */
 	worldSpeedSpeed = 0.00065
 	/** Number of connection stars per pixel on the screen. */
@@ -65,6 +69,12 @@ export default class Starfield extends XCanvas {
 	pallette: string[] = []
 
 	actualWorldSpeed: number = 0.5
+	warpSpeed = 0.004
+	rot = 1
+	rotSpeed = 0.0
+	spawnBoxSize = 400
+
+	public printErrors: string[] = []
 
 	layout() {
 		super.layout()
@@ -104,11 +114,19 @@ export default class Starfield extends XCanvas {
 
 	private secretKeyboardShortcutLines = this.secretKeyboardShortcuts.toString().split("\n")
 
-	constructor(protected options: StarfieldOptions = new StarfieldOptions()) {
+	private direction: 1 | -1 = 1 as const
+
+	constructor(public options: StarfieldOptions = new StarfieldOptions()) {
 		super()
 
-		window.addEventListener("keydown", (e) => this.secretKeyboardShortcuts(e))
-		// ...
+		window.addEventListener("keydown", (e) => {
+			e.preventDefault()
+			this.secretKeyboardShortcuts(e)
+		})
+
+		// setInterval(() => {
+		// 	this.direction === 1 ? (this.direction = -1) : (this.direction = 1)
+		// }, 1000)
 	}
 
 	draw(t: number, deltaT: number, ctx: CanvasRenderingContext2D) {
@@ -124,10 +142,48 @@ export default class Starfield extends XCanvas {
 		if (this.connectionRadiusProduct > this.connectionRadiusProductActual) this.connectionRadiusProductActual += this.options.starPulseSpeed * worldSpeed * lagModifier
 		if (this.connectionRadiusProduct < this.connectionRadiusProductActual) this.connectionRadiusProductActual -= this.options.starPulseSpeed * worldSpeed * lagModifier
 
+		// rotate the canvas (rotation)
+		{
+			this.ctx.save()
+			const cx = this.canvas.width / 2
+			const cy = this.canvas.height / 2
+			ctx.translate(cx, cy)
+			this.ctx.rotate((Math.PI / 180) * this.rot)
+			this.rot += this.rotSpeed
+			if (this.rot === 360 || this.rot === -360) this.rot = 0 // fix int overflow
+			ctx.translate(-cx, -cy)
+		}
+
+		if (this.options.drawDebug) {
+			this.ctx.strokeStyle = "red"
+			this.ctx.strokeRect(this.canvas.width / 2 - this.spawnBoxSize / 2, this.canvas.height / 2 - this.spawnBoxSize / 2, this.spawnBoxSize, this.spawnBoxSize)
+		}
+
+		const cx = this.canvas.width / 2
+		const cy = this.canvas.height / 2
+
+		// for stars
 		for (let i = this.nStars - 1; i >= 0; i--) {
+			// calculate speeds
 			const star = this.stars[i]
 			star.px += star.vx * worldSpeed * lagModifier
 			star.py += star.vy * worldSpeed * lagModifier
+
+			// give things that are further away from the centre a greater velocity
+			// (warp speed)
+			{
+				// star.px += (star.px - cx) * this.warpSpeed
+				const zx = ((star.px - cx) / (Math.E / 9)) * this.warpSpeed
+				const zy = ((star.py - cy) / (Math.E / 9)) * this.warpSpeed
+
+				if (this.options.drawDebug) {
+					this.ctx.fillText(`${zx.toFixed(2)}`, star.px, star.py)
+					this.ctx.fillText(`${zy.toFixed(2)}`, star.px, star.py + 8)
+				}
+				star.vx += zx
+				star.vy += zy
+				// star.py += (cy - star.vy) * this.warpSpeed
+			}
 
 			if (star.extraSpeedY || star.extraSpeedX) {
 				if (star.extraSpeedX > 0) {
@@ -143,8 +199,12 @@ export default class Starfield extends XCanvas {
 					star.extraSpeedY = Math.min(star.extraSpeedY + star.extraSpeedResistance * worldSpeed * lagModifier, 0)
 				}
 
-				star.px += star.extraSpeedX * worldSpeed * lagModifier
-				star.py += star.extraSpeedY * worldSpeed * lagModifier
+				star.px += star.extraSpeedX * worldSpeed * lagModifier * Math.max(1.0, Math.abs(cy) * this.warpSpeed * Math.E * 10) * this.direction
+				star.py += star.extraSpeedY * worldSpeed * lagModifier * Math.max(1.0, Math.abs(cy) * this.warpSpeed * Math.E * 10) * this.direction
+
+				// Hack perspective
+				// star.px += Math.abs(cx) * this.warpSpeed * Math.E
+				// star.py += Math.abs(cy) * this.warpSpeed * Math.E
 			}
 
 			// remove from loop if out of bounds
@@ -188,6 +248,7 @@ export default class Starfield extends XCanvas {
 
 			alpha = alpha // * lagModifier
 			this.ctx.fillStyle = `rgba(150,150,150,${alpha})`
+			// this.ctx.fillStyle = "black"
 			star.alpha = alpha
 			this.ctx.fill()
 
@@ -196,8 +257,9 @@ export default class Starfield extends XCanvas {
 				if (this.connectionRadiusProduct > this.connectionRadiusProductActual) this.connectionRadiusProductActual += this.options.starPulseSpeed * worldSpeed * lagModifier
 				if (this.connectionRadiusProduct < this.connectionRadiusProductActual) this.connectionRadiusProductActual -= this.options.starPulseSpeed * worldSpeed * lagModifier
 
-				let radius = star.connectionRadius
-				radius = radius * this.connectionRadiusProductActual
+				let radius = star.connectionRadius * (Math.max(Math.abs(cx), Math.abs(cy)) * 0.000305 * Math.E)
+				radius = radius * this.connectionRadiusProductActual // * Math.max(1, Math.abs(star.px - cx) * this.warpSpeed * Math.E * 5)
+
 				for (let i2 = this.nStars - 1; i2 >= 0; i2--) {
 					const star2 = this.stars[i2]
 					if (star2.px < star.px + radius && star2.px > star.px - radius && star2.py > star.py - radius && star2.py < star.py + radius) {
@@ -214,6 +276,7 @@ export default class Starfield extends XCanvas {
 							this.ctx.strokeStyle = `rgba(${star.color}, ${lineAlpha})`
 							this.ctx.lineTo(star2.px, star2.py)
 							this.ctx.stroke()
+							this.ctx.lineWidth = 2
 							this.nLines++
 						}
 					}
@@ -221,16 +284,31 @@ export default class Starfield extends XCanvas {
 			}
 		}
 
-		if (this.options.showKeyboardShortcuts || this.options.drawDebug) {
+		// finish rotation
+		{
+			this.ctx.restore()
+		}
+
+		if (this.options.showKeyboardShortcuts || this.options.drawDebug || this.printErrors.length) {
 			this.ctx.font = "12px monospace"
-			this.ctx.fillStyle = "white"
+			this.ctx.fillStyle = "grey"
 		}
 
 		if (this.options.drawDebug) {
 			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (world: ${this.actualWorldSpeed}/${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 12, 12)
+			this.ctx.fillText(`WARP:${this.warpSpeed} SPAWNBOX:${this.spawnBoxSize}`, 24, 24)
+			//  ROT:${this.rot.toFixed(2)} ROTSPEED:${this.rotSpeed}
 		}
 
 		if (this.options.showKeyboardShortcuts) for (let i = 0, y = 48 * 3; i < this.secretKeyboardShortcutLines.length; i++, y += 12) this.ctx.fillText(this.secretKeyboardShortcutLines[i], 12, y)
+
+		if (this.printErrors.length) {
+			this.ctx.fillStyle = "red"
+			for (let i = 0; i < this.printErrors.length; i++) {
+				const line = this.printErrors[i]
+				this.ctx.fillText(line, 12, this.canvas.height - 96 - 16 * (i + 1))
+			}
+		}
 	}
 
 	resize(lastWidth: number, lastHeight: number, newWidth: number, newHeight: number) {
@@ -291,11 +369,11 @@ export default class Starfield extends XCanvas {
 		this.nStars++
 	}
 
-	protected addFirstConnectionStar() {
+	public addFirstConnectionStar() {
 		this.addConnectionStar(this.canvas.width / 2, this.canvas.height / 2)
 	}
 
-	protected spawnTick(nStarsToSpawn = 1) {
+	public spawnTick(nStarsToSpawn = 1) {
 		if (this.nStars >= this.maximumStarPopulation) return
 
 		if (this.nConnectionStars === 0) {
@@ -306,6 +384,15 @@ export default class Starfield extends XCanvas {
 				if (!star) throw new Error("Expected a star in the array at this position.")
 				const px = star.px
 				const py = star.py
+
+				// distance from centre
+				const dcx = Math.abs(this.canvas.width / 2 - star.px)
+				const dcy = Math.abs(this.canvas.height / 2 - star.py)
+				const dist = this.spawnBoxSize / 2
+
+				if (dcx > dist || dcy > dist) {
+					continue
+				}
 
 				for (let ic = 0; ic < nStarsToSpawn; ic++) {
 					if (this.nConnectionStars < this.maxConnectionStars) {

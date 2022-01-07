@@ -10,18 +10,19 @@ class SpotifyStarfieldOptions {
 	TATUM_MIN_CONFIDENCE = 0.45
 	COLORS = [
 		// 0 = C, 1 = C♯/D♭, 2 = D, and so on
-		["255,47,146", "255,49,148", "255,51,150"],
-		["255,126,121", "255,129,124", "255,131,126"],
-		["255,212,121", "255,214,126", "255,215,127"],
-		["255,252,121", "255,253,124", "255,253,125"],
-		["212,251,121", "215,253,123", "215,253,126"],
-		["115,250,121", "117,251,123", "117,253,127"],
-		["115,252,214", "117,253,215", "119,253,215"],
-		["115,253,255", "117,253,255", "119,251,253"],
-		["118,214,255", "119,214,255", "120,214,255"],
-		["122,129,255", "122,131,255", "123,133,255"],
-		["215,131,255", "215,127,255", "215,134,255"],
-		["255,133,255", "255,135,255", "255,136,255"],
+		["82,247,146", "170,49,148", "255,51,199"], // picks one of these per new connection star
+		["1,126,121", "255,129,255", "1,255,196"], // format = red,green,blue
+		["12,212,121", "170,214,126", "255,215,197"],
+		["5,252,255", "170,253,124", "255,253,195"],
+		["5,20,255", "170,253,124", "5,253,195"],
+		["42,251,121", "177,253,123", "215,253,126"],
+		["115,250,121", "255,251,123", "117,253,127"],
+		["115,252,214", "255,253,215", "119,253,215"],
+		["11,253,255", "200,1,255", "119,251,253"],
+		["118,214,255", "255,214,255", "120,214,255"],
+		["255,0,0", "0,255,0", "0,0,255"],
+		["0,0,255", "120,0,255", "215,13,255"],
+		["255,133,255", "42,135,255", "255,136,255"],
 	]
 }
 
@@ -62,7 +63,8 @@ interface SpotifyAnalysis {
 	track: SpotifyTrack
 }
 
-export default class SpotifyStarfield extends Starfield {
+export default class SpotifyStarfield {
+	private starfield = new Starfield()
 	private token: string | undefined = hashFragment["access_token"]
 	private spotifyOptions = new SpotifyStarfieldOptions()
 	private $playerMeta = $("#player-meta")
@@ -75,6 +77,10 @@ export default class SpotifyStarfield extends Starfield {
 	/** Current track ID. Undefined if not playing */
 	private currentTrackID?: string
 	private paused: boolean = false
+
+	public get canvas() {
+		return this.starfield.canvas
+	}
 
 	private isPlaying() {
 		return !!this.currentTrackID
@@ -102,9 +108,9 @@ export default class SpotifyStarfield extends Starfield {
 	private pushSpeed = 1
 
 	private hitBeat(beat: SpotifyBeat) {
-		if (!this.nConnectionStars) return // bail if no connection stars
-		for (let i = 0; i < this.nConnectionStars; i++) {
-			const star = this.connectionStars[i]
+		if (!this.starfield.nConnectionStars) return // bail if no connection stars
+		for (let i = 0; i < this.starfield.nConnectionStars; i++) {
+			const star = this.starfield.connectionStars[i]
 			const v = this.spotifyOptions.BEAT_STRENGTH * beat.confidence
 			star.extraSpeedY = this.pushSpeed * (star.vy > 0 ? v : -v) // * star.vyc
 			star.extraSpeedX = this.pushSpeed * (star.vx > 0 ? v : -v) // * star.vx
@@ -114,20 +120,23 @@ export default class SpotifyStarfield extends Starfield {
 	}
 
 	private hitTatum(tatum: SpotifyTatum) {
-		this.spawnTick()
+		this.starfield.spawnTick()
 	}
 
 	private newSection(section: SpotifySection) {
-		this.options.worldSpeed = section.tempo / 240
-		this.pallette = this.spotifyOptions.COLORS[section.key]
+		this.starfield.options.worldSpeed = section.tempo / 240
+		this.starfield.pallette = this.spotifyOptions.COLORS[section.key]
 		this.pushSpeed = Math.min(2, Math.max(0.9, Math.abs(-(section.loudness + 10) - 20) / 20))
-		console.warn("Changed section", section, this.connectionRadiusProduct, 20 - section.loudness, this.pushSpeed)
+		console.warn("Changed section", section, this.starfield.connectionRadiusProduct, 20 - section.loudness, this.pushSpeed)
+		this.starfield.warpSpeed = 0.005 / (this.pushSpeed * section.tempo) // base this on our already calculated push speed ^
+		this.starfield.spawnBoxSize = Math.max(300, this.pushSpeed * 500)
+		this.starfield.rotSpeed = Math.sin(section.tempo / (360 * 2))
 	}
 
 	private newSegment(segment: SpotifySegment) {
 		// Hook the world speed to the track tempo
-		this.connectionRadiusProduct = Math.max(0.3, Math.abs(-(segment.loudness_start + 10) - 30) / 30)
-		this.spawnTick()
+		this.starfield.connectionRadiusProduct = Math.max(0.3, Math.abs(-(segment.loudness_start + 10) - 30) / 30)
+		this.starfield.spawnTick()
 	}
 
 	private async newTrack(track: SpotifyTrack) {
@@ -232,45 +241,50 @@ export default class SpotifyStarfield extends Starfield {
 	}
 
 	private async trackWatcher() {
-		const track = await this.spotify("/me/player")
-		if (!track) return
+		try {
+			const track = await this.spotify("/me/player")
+			if (!track) return
 
-		// update the UI
-		const current =
-			Math.floor(track.progress_ms / 1000 / 60) +
-			":" +
-			Math.floor((track.progress_ms / 1000) % 60)
-				.toString()
-				.padStart(2, "0")
-		const end =
-			Math.floor(track.item.duration_ms / 1000 / 60) +
-			":" +
-			Math.floor((track.item.duration_ms / 1000) % 60)
-				.toString()
-				.padStart(2, "0")
-		applyTemplate(this.$playerTime, {current, end})
+			// update the UI
+			const current =
+				Math.floor(track.progress_ms / 1000 / 60) +
+				":" +
+				Math.floor((track.progress_ms / 1000) % 60)
+					.toString()
+					.padStart(2, "0")
+			const end =
+				Math.floor(track.item.duration_ms / 1000 / 60) +
+				":" +
+				Math.floor((track.item.duration_ms / 1000) % 60)
+					.toString()
+					.padStart(2, "0")
+			applyTemplate(this.$playerTime, {current, end})
 
-		if (track.item.id !== this.currentTrackID) {
-			this.currentTrackID = track.item.id
-			await this.newTrack(track)
-		} else if (track.progress_ms < this.progress_ms) {
-			console.log("Went backwards in song, for all intents and purposes this is treated like a new song.")
-			await this.resync(track)
+			if (track.item.id !== this.currentTrackID) {
+				this.currentTrackID = track.item.id
+				await this.newTrack(track)
+			} else if (track.progress_ms < this.progress_ms) {
+				console.log("Went backwards in song, for all intents and purposes this is treated like a new song.")
+				await this.resync(track)
+			}
+
+			if (track.is_playing) {
+				this.starfield.addFirstConnectionStar()
+				this.paused = false
+			} else {
+				this.paused = true
+			}
+
+			this.progress_ms = track.progress_ms
+		} catch (ex) {
+			this.starfield.printErrors.push("Error getting current track.")
+			console.error(ex)
 		}
-
-		if (track.is_playing) {
-			this.addFirstConnectionStar()
-			this.paused = false
-		} else {
-			this.paused = true
-		}
-
-		this.progress_ms = track.progress_ms
 	}
 
 	public start() {
 		// On start...
-		super.start()
+		this.starfield.start()
 
 		console.log("Started spotify visualizer with token:" + this.token)
 		if (this.token) {

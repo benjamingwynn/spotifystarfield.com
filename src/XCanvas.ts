@@ -59,8 +59,14 @@ export default abstract class XCanvas {
 
 	protected layout() {
 		const box = this.canvas.getBoundingClientRect()
-		const width = box.width
-		const height = box.height
+
+		// rotation requires equal width and height
+		const width = Math.max(box.width, box.height)
+		const height = Math.max(box.width, box.height)
+
+		// const width = box.width
+		// const height = box.height
+
 		this.scale = window.devicePixelRatio || 1
 		this.canvas.width = Math.floor(width * this.scale)
 		this.canvas.height = Math.floor(height * this.scale)
