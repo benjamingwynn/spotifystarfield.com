@@ -36,7 +36,7 @@ class StarfieldOptions {
 	/** Size around the canvas in pixels where stars will start to fade out. */
 	edgeSize = 100
 	/** Number of stars per pixels on the screen */
-	starPopulationDensity = 0.000045
+	starPopulationDensity = 0.000045 / window.devicePixelRatio
 	/** Whether debug information should be drawn on the screen. */
 	drawDebug = false
 	/** The minimum speed a star can be spawned with. */
@@ -48,7 +48,7 @@ class StarfieldOptions {
 	/** The rate the world speed changes at */
 	worldSpeedSpeed = 0.00065
 	/** Number of connection stars per pixel on the screen. */
-	connectionStarPopulationDensity = 0.000023
+	connectionStarPopulationDensity = 0.000023 / window.devicePixelRatio
 	/** Whether keyboard shortcuts should be displayed on the screen. */
 	showKeyboardShortcuts = false
 	/** How fast star radii change in size when the volume of the track changes. */
@@ -72,7 +72,7 @@ export default class Starfield extends XCanvas {
 	warpSpeed = 0.004
 	rot = 1
 	rotSpeed = 0.0
-	spawnBoxSize = 400
+	spawnBoxSize = 400 * window.devicePixelRatio
 
 	public printErrors: string[] = []
 
@@ -295,8 +295,8 @@ export default class Starfield extends XCanvas {
 		}
 
 		if (this.options.drawDebug) {
-			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (world: ${this.actualWorldSpeed}/${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 12, 12)
-			this.ctx.fillText(`WARP:${this.warpSpeed} SPAWNBOX:${this.spawnBoxSize}`, 24, 24)
+			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (world: ${this.actualWorldSpeed}/${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, window.innerHeight / 2 + 12, 12)
+			this.ctx.fillText(`WARP:${this.warpSpeed} SPAWNBOX:${this.spawnBoxSize}`, 24, window.innerHeight / 2 + 12)
 			//  ROT:${this.rot.toFixed(2)} ROTSPEED:${this.rotSpeed}
 		}
 

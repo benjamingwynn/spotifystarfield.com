@@ -283,14 +283,20 @@ export default class SpotifyStarfield {
 	}
 
 	public start() {
+		if (!this.token) {
+			// do not start without a token
+			return
+		}
 		// On start...
 		this.starfield.start()
 
 		console.log("Started spotify visualizer with token:" + this.token)
+		$("#login").hidden = true
+		$("#loading").hidden = false
 		if (this.token) {
-			setInterval(() => this.trackWatcher(), 3000)
+			setInterval(() => this.trackWatcher(), 1000)
 			this.trackWatcher().then(() => {
-				$("#login").hidden = true
+				$("#loading").hidden = true
 			})
 		}
 	}
