@@ -27,7 +27,7 @@ html,
 }
 
 *[hidden] {
-	display: none;
+	display: none !important;
 }
 
 h1,
@@ -38,6 +38,10 @@ h5,
 h6 {
 	font-weight: bold;
 	text-transform: uppercase;
+}
+
+p {
+	margin: 0;
 }
 
 main {
@@ -71,6 +75,8 @@ main {
 }
 
 main article {
+	min-width: 10em;
+	max-width: 50em;
 	padding: 1em 2em 1em 1.2em;
 	margin: auto auto 1em 0;
 	background: black;
@@ -88,7 +94,6 @@ main article h1 {
 	margin-bottom: 0.4em;
 }
 
-main article p,
 main article code {
 	margin-bottom: 1em;
 }
@@ -161,4 +166,69 @@ main article code span {
 		font-size: 1.3em;
 		padding: 0.2em 0;
 	}
+}
+
+#no-track {
+	margin: auto;
+	text-align: center;
+}
+
+#login {
+	margin: auto;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-flow: column nowrap;
+	padding: 2em;
+}
+
+#login-btn {
+	background: rgb(74, 196, 74);
+	color: white;
+	opacity: 1;
+	font-size: 1.25em;
+	border: double 6px rgb(0, 141, 19);
+	padding: 1em 2em;
+	display: block;
+	text-decoration: none;
+	margin: 1em auto;
+	font-weight: bolder;
+	text-transform: uppercase;
+}
+
+#login-btn:hover {
+	background: rgb(83, 238, 83);
+}
+
+#logo {
+	font-size: 3.5em;
+	text-align: center;
+	text-transform: uppercase;
+	animation: wow 5s infinite alternate ease-in-out;
+	overflow: visible;
+	text-overflow: clip;
+	word-break: keep-all;
+}
+
+@keyframes wow {
+	from {
+		transform: scaleX(1);
+		color: rgb(225, 0, 255);
+		letter-spacing: 1px;
+	}
+	to {
+		letter-spacing: 2px;
+		transform: scaleX(0.9);
+		color: rgb(70, 177, 209);
+	}
+}
+
+#login p {
+	text-align: center;
+	margin-bottom: 1ex;
+}
+
+#login h2,
+#login h3 {
+	margin-top: 1em;
 }

@@ -32,9 +32,9 @@ class StarfieldOptions {
 	STAR_RADIUS = 1
 	/** The minimum radius a connection star can reach another star. A random number will be picked between this and `maxConnectionRadius` */
 	minConnectionRadius = 60
-	maxConnectionRadius = 160
+	maxConnectionRadius = 100
 	/** Size around the canvas in pixels where stars will start to fade out. */
-	edgeSize = 100
+	edgeSize = 60
 	/** Number of stars per pixels on the screen */
 	starPopulationDensity = 0.000045 / window.devicePixelRatio
 	/** Whether debug information should be drawn on the screen. */
@@ -84,10 +84,18 @@ export default class Starfield extends XCanvas {
 	}
 
 	private secretKeyboardShortcuts(e: {key: string}) {
+		//
 		// You found the secret keyboard shortcuts!
+		//
 		const opt = this.options
 
 		if (e.key === "F1") opt.showKeyboardShortcuts = !opt.showKeyboardShortcuts
+
+		// Draw the debugging options
+		if (e.key === "d") opt.drawDebug = !opt.drawDebug
+
+		// Hide the player UI
+		if (e.key === "h") $("main").hidden = !$("main").hidden
 
 		// Control speed
 		if (e.key === "i") opt.worldSpeed = opt.worldSpeed - 0.1
@@ -103,10 +111,6 @@ export default class Starfield extends XCanvas {
 		if (e.key === "z") this.maximumStarPopulation--
 		if (e.key === "x") this.maximumStarPopulation++
 
-		// Misc.
-		if (e.key === "d") opt.drawDebug = !opt.drawDebug
-		if (e.key === "h") $("main").hidden = !$("main").hidden
-
 		// Navigation
 		if (e.key === "f") document.fullscreen ? document.exitFullscreen() : document.documentElement.requestFullscreen()
 		if (e.key === "r") location.reload()
@@ -120,7 +124,6 @@ export default class Starfield extends XCanvas {
 		super()
 
 		window.addEventListener("keydown", (e) => {
-			e.preventDefault()
 			this.secretKeyboardShortcuts(e)
 		})
 
@@ -295,12 +298,12 @@ export default class Starfield extends XCanvas {
 		}
 
 		if (this.options.drawDebug) {
-			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (world: ${this.actualWorldSpeed}/${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, window.innerHeight / 2 + 12, 12)
+			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (world: ${this.actualWorldSpeed}/${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 24, window.innerHeight / 2 + 24)
 			this.ctx.fillText(`WARP:${this.warpSpeed} SPAWNBOX:${this.spawnBoxSize}`, 24, window.innerHeight / 2 + 12)
 			//  ROT:${this.rot.toFixed(2)} ROTSPEED:${this.rotSpeed}
 		}
 
-		if (this.options.showKeyboardShortcuts) for (let i = 0, y = 48 * 3; i < this.secretKeyboardShortcutLines.length; i++, y += 12) this.ctx.fillText(this.secretKeyboardShortcutLines[i], 12, y)
+		if (this.options.showKeyboardShortcuts) for (let i = 0, y = 300 * 3; i < this.secretKeyboardShortcutLines.length; i++, y += 12) this.ctx.fillText(this.secretKeyboardShortcutLines[i], 12, y)
 
 		if (this.printErrors.length) {
 			this.ctx.fillStyle = "red"

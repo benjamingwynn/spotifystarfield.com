@@ -69,6 +69,7 @@ export default class SpotifyStarfield {
 	private spotifyOptions = new SpotifyStarfieldOptions()
 	private $playerMeta = $("#player-meta")
 	private $playerTime = $("#player-time")
+	private $noTrack = $("#no-track")
 
 	private segment?: SpotifySegment
 	private section?: SpotifySection
@@ -126,10 +127,10 @@ export default class SpotifyStarfield {
 	private newSection(section: SpotifySection) {
 		this.starfield.options.worldSpeed = section.tempo / 240
 		this.starfield.pallette = this.spotifyOptions.COLORS[section.key]
-		this.pushSpeed = Math.min(2, Math.max(0.9, Math.abs(-(section.loudness + 10) - 20) / 20))
+		this.pushSpeed = Math.min(1.6, Math.max(0.9, Math.abs(-(section.loudness + 10) - 20) / 20))
 		console.warn("Changed section", section, this.starfield.connectionRadiusProduct, 20 - section.loudness, this.pushSpeed)
 		this.starfield.warpSpeed = 0.005 / (this.pushSpeed * section.tempo) // base this on our already calculated push speed ^
-		this.starfield.spawnBoxSize = Math.max(300, this.pushSpeed * 500) * devicePixelRatio
+		this.starfield.spawnBoxSize = this.pushSpeed * section.tempo * 5 * devicePixelRatio
 		this.starfield.rotSpeed = Math.sin(section.tempo / (360 * 2))
 	}
 
@@ -243,7 +244,14 @@ export default class SpotifyStarfield {
 	private async trackWatcher() {
 		try {
 			const track = await this.spotify("/me/player")
-			if (!track) return
+			if (!track) {
+				$("#player").hidden = true
+				this.$noTrack.hidden = false
+				this.paused = true
+				return
+			}
+			$("#player").hidden = false
+			this.$noTrack.hidden = true
 
 			// update the UI
 			const current =
