@@ -44,7 +44,7 @@ class StarfieldOptions {
 	/** The maximum speed the star can be spawned with. */
 	starMaxSpeed = 1.7
 	/** The world speed, should scale all animations evenly. */
-	worldSpeed = 0.2
+	worldSpeed = 0
 	/** The rate the world speed changes at */
 	worldSpeedSpeed = 0.00065
 	/** Number of connection stars per pixel on the screen. */
@@ -68,7 +68,7 @@ export default class Starfield extends XCanvas {
 	/** Star colors will be drawn from this array randomly. Expects `r,g,b` formatting (`0,0,0` - `255,255,255`). */
 	pallette: string[] = []
 
-	actualWorldSpeed: number = 0.5
+	actualWorldSpeed: number = 0.0
 	warpSpeed = 0.004
 	rot = 1
 	rotSpeed = 0.0
@@ -138,10 +138,16 @@ export default class Starfield extends XCanvas {
 		this.nLines = 0
 		this.canvas.width = this.canvas.width // this clears the canvas
 
-		if (this.actualWorldSpeed > this.options.worldSpeed) this.actualWorldSpeed -= this.options.worldSpeedSpeed * lagModifier
-		if (this.actualWorldSpeed < this.options.worldSpeed) this.actualWorldSpeed += this.options.worldSpeedSpeed * lagModifier
+		if (!this.actualWorldSpeed && this.options.worldSpeed) {
+			this.actualWorldSpeed = this.options.worldSpeed
+		}
+		if (this.options.worldSpeed) {
+			if (this.actualWorldSpeed > this.options.worldSpeed) this.actualWorldSpeed -= this.options.worldSpeedSpeed * lagModifier
+			if (this.actualWorldSpeed < this.options.worldSpeed) this.actualWorldSpeed += this.options.worldSpeedSpeed * lagModifier
+		}
 
-		let worldSpeed = this.actualWorldSpeed
+		let worldSpeed = this.actualWorldSpeed || 1
+
 		if (this.connectionRadiusProduct > this.connectionRadiusProductActual) this.connectionRadiusProductActual += this.options.starPulseSpeed * worldSpeed * lagModifier
 		if (this.connectionRadiusProduct < this.connectionRadiusProductActual) this.connectionRadiusProductActual -= this.options.starPulseSpeed * worldSpeed * lagModifier
 
@@ -176,13 +182,9 @@ export default class Starfield extends XCanvas {
 			// (warp speed)
 			{
 				// star.px += (star.px - cx) * this.warpSpeed
-				const zx = ((star.px - cx) / (Math.E / 9)) * this.warpSpeed
-				const zy = ((star.py - cy) / (Math.E / 9)) * this.warpSpeed
+				const zx = ((star.px - cx) / (Math.E / 20)) * this.warpSpeed
+				const zy = ((star.py - cy) / (Math.E / 20)) * this.warpSpeed
 
-				if (this.options.drawDebug) {
-					this.ctx.fillText(`${zx.toFixed(2)}`, star.px, star.py)
-					this.ctx.fillText(`${zy.toFixed(2)}`, star.px, star.py + 8)
-				}
 				star.vx += zx
 				star.vy += zy
 				// star.py += (cy - star.vy) * this.warpSpeed
@@ -202,12 +204,8 @@ export default class Starfield extends XCanvas {
 					star.extraSpeedY = Math.min(star.extraSpeedY + star.extraSpeedResistance * worldSpeed * lagModifier, 0)
 				}
 
-				star.px += star.extraSpeedX * worldSpeed * lagModifier * Math.max(1.0, Math.abs(cy) * this.warpSpeed * Math.E * 10) * this.direction
-				star.py += star.extraSpeedY * worldSpeed * lagModifier * Math.max(1.0, Math.abs(cy) * this.warpSpeed * Math.E * 10) * this.direction
-
-				// Hack perspective
-				// star.px += Math.abs(cx) * this.warpSpeed * Math.E
-				// star.py += Math.abs(cy) * this.warpSpeed * Math.E
+				star.px += star.extraSpeedX * worldSpeed * lagModifier * this.direction
+				star.py += star.extraSpeedY * worldSpeed * lagModifier * this.direction
 			}
 
 			// remove from loop if out of bounds
@@ -225,6 +223,13 @@ export default class Starfield extends XCanvas {
 				this.nStars--
 				continue
 			}
+
+			// ensure rounded
+			star.px = star.px | 0
+			star.py = star.py | 0
+		}
+		for (let i = this.nStars - 1; i >= 0; i--) {
+			const star = this.stars[i]
 
 			let alpha = 1
 
@@ -250,7 +255,7 @@ export default class Starfield extends XCanvas {
 			this.ctx.arc(star.px, star.py, this.options.STAR_RADIUS, 0, 2 * Math.PI)
 
 			alpha = alpha // * lagModifier
-			this.ctx.fillStyle = `rgba(150,150,150,${alpha})`
+			this.ctx.fillStyle = `rgba(100,100,100,${alpha})`
 			// this.ctx.fillStyle = "black"
 			star.alpha = alpha
 			this.ctx.fill()
@@ -279,7 +284,7 @@ export default class Starfield extends XCanvas {
 							this.ctx.strokeStyle = `rgba(${star.color}, ${lineAlpha})`
 							this.ctx.lineTo(star2.px, star2.py)
 							this.ctx.stroke()
-							this.ctx.lineWidth = 2
+							this.ctx.lineWidth = 3
 							this.nLines++
 						}
 					}
@@ -298,8 +303,9 @@ export default class Starfield extends XCanvas {
 		}
 
 		if (this.options.drawDebug) {
-			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (world: ${this.actualWorldSpeed}/${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 24, window.innerHeight / 2 + 24)
-			this.ctx.fillText(`WARP:${this.warpSpeed} SPAWNBOX:${this.spawnBoxSize}`, 24, window.innerHeight / 2 + 12)
+			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (world: ${this.actualWorldSpeed}/${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 24, this.canvas.height / 2 + 24)
+			this.ctx.fillText(`WARP:${this.warpSpeed} SPAWNBOX:${this.spawnBoxSize}`, 24, this.canvas.height / 2 + 12)
+			this.ctx.fillText(`dT:${deltaT.toFixed(2)} lag:${lagModifier.toFixed(2)}`, 24, this.canvas.height / 2 + 48)
 			//  ROT:${this.rot.toFixed(2)} ROTSPEED:${this.rotSpeed}
 		}
 
