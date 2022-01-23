@@ -283,7 +283,8 @@ export default class Starfield extends XCanvas {
 				if (this.connectionRadiusProduct > this.connectionRadiusProductActual) this.connectionRadiusProductActual += this.options.starPulseSpeed * worldSpeed * lagModifier
 				if (this.connectionRadiusProduct < this.connectionRadiusProductActual) this.connectionRadiusProductActual -= this.options.starPulseSpeed * worldSpeed * lagModifier
 
-				let radius = star.connectionRadius * (Math.max(Math.abs(cx), Math.abs(cy)) * 0.000305 * Math.E)
+				const extraRadius = Math.max(Math.abs(cx - star.px), Math.abs(cy - star.py)) / (Math.E * 175)
+				let radius = star.connectionRadius * Math.max(1, extraRadius)
 				radius = radius * this.connectionRadiusProductActual // * Math.max(1, Math.abs(star.px - cx) * this.warpSpeed * Math.E * 5)
 
 				for (let i2 = this.nStars - 1; i2 >= 0; i2--) {
@@ -300,7 +301,7 @@ export default class Starfield extends XCanvas {
 						if (dt < radius + this.options.STAR_RADIUS) {
 							this.ctx.beginPath()
 							this.ctx.lineTo(star.px, star.py)
-							this.ctx.strokeStyle = `rgba(${star.color}, ${lineAlpha})`
+							this.ctx.strokeStyle = extraRadius > 1 && this.options.drawDebug ? "blue" : `rgba(${star.color}, ${lineAlpha})`
 							this.ctx.lineTo(star2.px, star2.py)
 							this.ctx.stroke()
 							this.ctx.lineWidth = 3
