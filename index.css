@@ -6,6 +6,7 @@ html {
 	height: 100%;
 	width: 100%;
 	animation: rainbow 10s both infinite;
+	overflow: hidden;
 }
 
 canvas {
@@ -231,4 +232,30 @@ main article code span {
 #login h2,
 #login h3 {
 	margin-top: 1em;
+}
+
+#keyboard {
+	position: absolute;
+	bottom: 1em;
+	right: 1em;
+	transition: 0.5s all;
+	opacity: 0.4;
+}
+
+#keyboard[hidden] {
+	display: block !important;
+	visibility: hidden;
+	opacity: 0;
+	transform: translateY(3em);
+}
+
+#keyboard > div {
+	display: flex;
+	align-items: center;
+}
+
+#keyboard > div > h2 {
+	font-weight: bolder;
+	width: 0.5em;
+	margin-right: 0.5em;
 }

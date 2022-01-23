@@ -125,12 +125,12 @@ export default class SpotifyStarfield {
 	}
 
 	private newSection(section: SpotifySection) {
-		this.starfield.options.worldSpeed = section.tempo / 240
+		this.starfield.options.worldSpeed = section.tempo / 480
 		this.starfield.pallette = this.spotifyOptions.COLORS[section.key]
 		this.pushSpeed = Math.min(1.6, Math.max(0.9, Math.abs(-(section.loudness + 10) - 20) / 20))
 		console.warn("Changed section", section, this.starfield.connectionRadiusProduct, 20 - section.loudness, this.pushSpeed)
 		this.starfield.warpSpeed = 0.005 / (this.pushSpeed * section.tempo) // base this on our already calculated push speed ^
-		this.starfield.spawnBoxSize = this.pushSpeed * section.tempo * 5 * devicePixelRatio
+		this.starfield.spawnRadius = Math.max(window.innerHeight / 5, Math.min(window.innerHeight / 3, this.pushSpeed * section.tempo * 2)) * devicePixelRatio
 		this.starfield.rotSpeed = Math.sin(section.tempo / (360 * 2))
 	}
 

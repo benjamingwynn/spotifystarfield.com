@@ -59,6 +59,26 @@
 				<p>You can play music using the Spotify app on any device, even this one.</p>
 			</article>
 
+			<article id="keyboard" hidden>
+				<div>
+					<h2>H</h2>
+					<h3>Hide all UI</h3>
+				</div>
+				<div>
+					<h2>F</h2>
+					<h3>Request fullscreen</h3>
+				</div>
+				<div>
+					<h2>D</h2>
+					<h3>Debugging information</h3>
+				</div>
+				<div>
+					<h2>R</h2>
+					<h3>Reload page</h3>
+				</div>
+				<small>This overlay hides automatically if you don't move the mouse</small>
+			</article>
+
 			<article id="player" hidden>
 				<span id="player-meta">{song} - {artist}</span>
 				<span id="player-time">{current} / {end}</span>
@@ -75,14 +95,22 @@
 		<script>
 			const tf = () => {
 				document.body.style.cursor = "none"
+				if (!document.querySelector("#player").hidden) {
+					document.querySelector("#keyboard").hidden = true
+				}
 			}
-			const tt = 1500
+			const tt = 3000
 			let t = setTimeout(tf, tt)
 			document.addEventListener("mousemove", () => {
+				if (!document.querySelector("#player").hidden) {
+					document.querySelector("#keyboard").hidden = false
+				}
+
 				document.body.style.cursor = ""
 				clearTimeout(t)
 				t = setTimeout(tf, tt)
 			})
 		</script>
+		<script></script>
 	</body>
 </html>
