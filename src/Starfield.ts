@@ -34,7 +34,7 @@ class StarfieldOptions {
 	minConnectionRadius = 60
 	maxConnectionRadius = 100
 	/** Size around the canvas in pixels where stars will start to fade out. */
-	edgeSize = 60
+	edgeSize = 400
 	/** Number of stars per pixels on the screen */
 	starPopulationDensity = 0.000045 / window.devicePixelRatio
 	/** Whether debug information should be drawn on the screen. */
@@ -263,13 +263,18 @@ export default class Starfield extends XCanvas {
 			const star = this.stars[i]
 
 			this.ctx.beginPath()
-			this.ctx.arc(star.px, star.py, this.options.STAR_RADIUS, 0, 2 * Math.PI)
+			this.ctx.arc(star.px, star.py, this.options.drawDebug ? 16 : this.options.STAR_RADIUS, 0, 2 * Math.PI)
 
 			const alpha = getAlpha(star)
-			this.ctx.fillStyle = `rgba(100,100,100,${alpha})`
+			this.ctx.fillStyle = this.options.drawDebug ? (alpha === 1 ? "green" : "red") : `rgba(100,100,100,${alpha})`
 			// this.ctx.fillStyle = "black"
 			star.alpha = alpha
 			this.ctx.fill()
+
+			if (this.options.drawDebug && alpha !== 1) {
+				this.ctx.fillStyle = "white"
+				this.ctx.fillText("a:" + alpha.toFixed(2), star.px, star.py)
+			}
 		}
 
 		//
@@ -299,9 +304,20 @@ export default class Starfield extends XCanvas {
 						const lineAlpha = Math.min(star2.alpha, Math.min(alpha, Math.min(1 - dt / radius, star.connectionOpacity)))
 
 						if (dt < radius + this.options.STAR_RADIUS) {
+							if (this.options.drawDebug) {
+								this.ctx.beginPath()
+								this.ctx.fillStyle = "yellow"
+								this.ctx.arc(star.px, star.py, 8, 0, 2 * Math.PI)
+								this.ctx.fill()
+								this.ctx.beginPath()
+								this.ctx.arc(star.px, star.py, radius + this.options.STAR_RADIUS, 0, 2 * Math.PI)
+								this.ctx.strokeStyle = "yellow"
+								this.ctx.lineWidth = 1
+								this.ctx.stroke()
+							}
 							this.ctx.beginPath()
 							this.ctx.lineTo(star.px, star.py)
-							this.ctx.strokeStyle = extraRadius > 1 && this.options.drawDebug ? "blue" : `rgba(${star.color}, ${lineAlpha})`
+							this.ctx.strokeStyle = this.options.drawDebug ? (extraRadius > 1 ? "blue" : "cyan") : `rgba(${star.color}, ${lineAlpha})`
 							this.ctx.lineTo(star2.px, star2.py)
 							this.ctx.stroke()
 							this.ctx.lineWidth = 3
