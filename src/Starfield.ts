@@ -311,13 +311,13 @@ export default class Starfield extends XCanvas {
 								this.ctx.fill()
 								this.ctx.beginPath()
 								this.ctx.arc(star.px, star.py, radius + this.options.STAR_RADIUS, 0, 2 * Math.PI)
-								this.ctx.strokeStyle = "yellow"
+								this.ctx.strokeStyle = extraRadius > 1 ? "blue" : "cyan"
 								this.ctx.lineWidth = 1
 								this.ctx.stroke()
 							}
 							this.ctx.beginPath()
 							this.ctx.lineTo(star.px, star.py)
-							this.ctx.strokeStyle = this.options.drawDebug ? (extraRadius > 1 ? "blue" : "cyan") : `rgba(${star.color}, ${lineAlpha})`
+							this.ctx.strokeStyle = this.options.drawDebug ? "yellow" : `rgba(${star.color}, ${lineAlpha})`
 							this.ctx.lineTo(star2.px, star2.py)
 							this.ctx.stroke()
 							this.ctx.lineWidth = 3
