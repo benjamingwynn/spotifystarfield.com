@@ -95,7 +95,10 @@ export default class Starfield extends XCanvas {
 		if (e.key === "d") opt.drawDebug = !opt.drawDebug
 
 		// Hide the player UI
-		if (e.key === "h") $("main").hidden = !$("main").hidden
+		if (e.key === "h") {
+			$("main").hidden = !$("main").hidden
+			localStorage.setItem("hideUI", $("main").hidden ? "1" : "0")
+		}
 
 		// Navigation
 		if (e.key === "f") document.fullscreen ? document.exitFullscreen() : document.documentElement.requestFullscreen()
@@ -116,6 +119,7 @@ export default class Starfield extends XCanvas {
 		// setInterval(() => {
 		// 	this.direction === 1 ? (this.direction = -1) : (this.direction = 1)
 		// }, 1000)
+		$("main").hidden = localStorage.getItem("hideUI") == "1"
 	}
 
 	draw(t: number, deltaT: number, ctx: CanvasRenderingContext2D) {
