@@ -117,10 +117,82 @@
 						<input type="range" min="0" max="2" value="0.45" step="0.05" />
 						<code>000</code>
 					</label>
+
+					<label data-prop="loudnessBaseline">
+						<span>loudnessBaseline</span>
+						<input type="range" min="1" max="50" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="loudnessExtra">
+						<span>loudnessExtra</span>
+						<input type="range" min="1" max="50" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="loudnessScale">
+						<span>loudnessScale</span>
+						<input type="range" min="1" max="50" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="pushSpeedMax">
+						<span>pushSpeedMax</span>
+						<input type="range" min="0.1" max="5" step="0.1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="pushSpeedMin">
+						<span>pushSpeedMin</span>
+						<input type="range" min="0.1" max="5" step="0.1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="rotSpeedTempoDiv">
+						<span>rotSpeedTempoDiv</span>
+						<input type="range" min="1" max="1000" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="connectionRadiusMinProduct">
+						<span>connectionRadiusMinProduct</span>
+						<input type="range" min="0.01" max="1" step="0.01" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="tempoWorldSpeed">
+						<span>tempoWorldSpeed</span>
+						<input type="range" min="1" max="1000" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="warpSpeedScaler">
+						<span>warpSpeedScaler</span>
+						<input type="range" min="0.001" max="1" step="0.001" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="spawnRadiusProduct">
+						<span>spawnRadiusProduct</span>
+						<input type="range" min="1" max="10" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="loudnessBaselineRadii">
+						<span>loudnessBaselineRadii</span>
+						<input type="range" min="1" max="100" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="loudnessScaleRadii">
+						<span>loudnessScaleRadiir</span>
+						<input type="range" min="1" max="100" step="1" />
+						<code>-</code>
+					</label>
 				</div>
 
 				<div class="collection" id="starfield-settings">
-					<h2>Starfield options</h2>
+					<h2>Starfield</h2>
 					<label data-prop="STAR_RADIUS">
 						<span>star radius</span>
 						<input type="range" min="1" max="32" step="1" />
@@ -168,16 +240,70 @@
 					</label>
 					<label data-prop="starPulseSpeed">
 						<span>pulse speed</span>
-						<input type="range" min="0" max="0.001" step="0.00005" />
+						<input type="range" min="0" max="0.01" step="0.00005" />
+						<code>-</code>
+					</label>
+					<label data-prop="lineWidth">
+						<span>line width</span>
+						<input type="range" min="1" max="16" step="1" />
 						<code>-</code>
 					</label>
 				</div>
 
 				<div class="collection" id="this-settings">
-					<h2>overrides</h2>
+					<h2>state</h2>
+
+					<label data-prop="maximumStarPopulation">
+						<span>max star population</span>
+						<input type="range" min="0" max="1000" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="maxConnectionStars">
+						<span>max connection stars</span>
+						<input type="range" min="0" max="1000" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="connectionRadiusProduct">
+						<span>connectionRadiusProduct</span>
+						<input type="range" min="0" max="1000" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="connectionRadiusProductActual">
+						<span>connectionRadiusProductActual</span>
+						<input type="range" min="0" max="1000" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="nStars">
+						<span>nStars</span>
+						<input type="range" min="0" max="1000" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="nConnectionStars">
+						<span>nConnectionStars</span>
+						<input type="range" min="0" max="1000" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="actualWorldSpeed">
+						<span>real world speed</span>
+						<input type="range" min="0.001" max="1" step="0.001" />
+						<code>-</code>
+					</label>
+
 					<label data-prop="warpSpeed">
 						<span>warp speed</span>
 						<input type="range" min="0" max="0.001" step="0.0000r1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="rot">
+						<span>rot</span>
+						<input type="range" min="0" max="360" step="1" />
 						<code>-</code>
 					</label>
 
@@ -189,18 +315,6 @@
 
 					<label data-prop="spawnRadius">
 						<span>spawn radius</span>
-						<input type="range" min="0" max="1000" step="1" />
-						<code>-</code>
-					</label>
-
-					<label data-prop="actualWorldSpeed">
-						<span>real world speed</span>
-						<input type="range" min="0.001" max="1" step="0.001" />
-						<code>-</code>
-					</label>
-
-					<label data-prop="maximumStarPopulation">
-						<span>max star population</span>
 						<input type="range" min="0" max="1000" step="1" />
 						<code>-</code>
 					</label>

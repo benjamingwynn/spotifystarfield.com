@@ -53,6 +53,9 @@ class StarfieldOptions {
 	showKeyboardShortcuts = false
 	/** How fast star radii change in size when the volume of the track changes. */
 	starPulseSpeed = 0.00065
+
+	opacityMultiplier = 0.0005
+	lineWidth = 3
 }
 
 export default class Starfield extends XCanvas {
@@ -318,7 +321,7 @@ export default class Starfield extends XCanvas {
 				for (let i2 = this.nStars - 1; i2 >= 0; i2--) {
 					const star2 = this.stars[i2]
 					if (star2.px < star.px + radius && star2.px > star.px - radius && star2.py > star.py - radius && star2.py < star.py + radius) {
-						star.connectionOpacity = Math.min(1, (star.connectionOpacity || 0) + 0.0005 * lagModifier)
+						star.connectionOpacity = Math.min(1, (star.connectionOpacity || 0) + this.options.opacityMultiplier * lagModifier)
 
 						const dx = star.px - star2.px
 						const dy = star.py - star2.py
@@ -343,7 +346,8 @@ export default class Starfield extends XCanvas {
 							this.ctx.strokeStyle = this.options.drawDebug ? "yellow" : `rgba(${star.color}, ${lineAlpha})`
 							this.ctx.lineTo(star2.px, star2.py)
 							this.ctx.stroke()
-							this.ctx.lineWidth = 3
+							this.ctx.lineWidth = this.options.lineWidth
+
 							this.nLines++
 						}
 					}
@@ -565,9 +569,13 @@ export default class Starfield extends XCanvas {
 		if (this.lightMode) {
 			document.body.style.background = "white"
 			document.body.classList.add("light")
+			this.options.STAR_RADIUS = 3
+			this.options.lineWidth = 5
 		} else {
 			document.body.style.background = ""
 			document.body.classList.remove("light")
+			this.options.STAR_RADIUS = 1
+			this.options.lineWidth = 3
 		}
 	}
 }

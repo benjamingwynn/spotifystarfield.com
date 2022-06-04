@@ -24,6 +24,19 @@ class SpotifyStarfieldOptions {
 		["0,0,255", "120,0,255", "215,13,255"],
 		["255,133,255", "42,135,255", "255,136,255"],
 	]
+	loudnessBaseline = 20
+	loudnessExtra = 10
+	loudnessScale = 20
+	pushSpeedMax = 1.6
+	pushSpeedMin = 0.9
+	rotSpeedTempoDiv = 360 * 2
+	connectionRadiusMinProduct = 0.3
+	tempoWorldSpeed = 480
+	warpSpeedScaler = 0.005
+	spawnRadiusProduct = 2
+
+	loudnessBaselineRadii = 30
+	loudnessScaleRadii = 30
 }
 
 interface SpotifyBeat {
@@ -130,18 +143,21 @@ export default class SpotifyStarfield {
 	}
 
 	private newSection(section: SpotifySection) {
-		this.starfield.options.worldSpeed = section.tempo / 480
+		const {connectionRadiusMinProduct, loudnessBaseline, loudnessExtra, loudnessScale, pushSpeedMax, pushSpeedMin, rotSpeedTempoDiv, spawnRadiusProduct, tempoWorldSpeed, warpSpeedScaler} = this.spotifyOptions
+		this.starfield.options.worldSpeed = section.tempo / tempoWorldSpeed
 		this.starfield.pallette = this.spotifyOptions.COLORS[section.key]
-		this.pushSpeed = Math.min(1.6, Math.max(0.9, Math.abs(-(section.loudness + 10) - 20) / 20))
-		console.warn("Changed section", section, this.starfield.connectionRadiusProduct, 20 - section.loudness, this.pushSpeed)
-		this.starfield.warpSpeed = 0.005 / (this.pushSpeed * section.tempo) // base this on our already calculated push speed ^
-		this.starfield.spawnRadius = Math.max(window.innerHeight / 5, Math.min(window.innerHeight / 3, this.pushSpeed * section.tempo * 2))
-		this.starfield.rotSpeed = Math.sin(section.tempo / (360 * 2))
+		this.pushSpeed = Math.min(pushSpeedMax, Math.max(pushSpeedMin, Math.abs(-(section.loudness + loudnessExtra) - loudnessBaseline) / loudnessScale))
+		console.warn("Changed section", section, this.starfield.connectionRadiusProduct, loudnessScale - section.loudness, this.pushSpeed)
+		this.starfield.warpSpeed = warpSpeedScaler / (this.pushSpeed * section.tempo) // base this on our already calculated push speed ^
+		this.starfield.spawnRadius = Math.max(window.innerHeight / 5, Math.min(window.innerHeight / 3, this.pushSpeed * section.tempo * spawnRadiusProduct))
+		this.starfield.rotSpeed = Math.sin(section.tempo / rotSpeedTempoDiv)
 	}
 
 	private newSegment(segment: SpotifySegment) {
+		const {loudnessBaselineRadii, loudnessScaleRadii, connectionRadiusMinProduct, loudnessBaseline, loudnessExtra, loudnessScale, pushSpeedMax, pushSpeedMin, rotSpeedTempoDiv, spawnRadiusProduct, tempoWorldSpeed, warpSpeedScaler} = this.spotifyOptions
+
 		// Hook the world speed to the track tempo
-		this.starfield.connectionRadiusProduct = Math.max(0.3, Math.abs(-(segment.loudness_start + 10) - 30) / 30)
+		this.starfield.connectionRadiusProduct = Math.max(connectionRadiusMinProduct, Math.abs(-(segment.loudness_start + loudnessExtra) - loudnessBaselineRadii) / loudnessScaleRadii)
 		this.starfield.spawnTick()
 	}
 

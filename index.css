@@ -287,6 +287,7 @@ article code span {
 	bottom: 0;
 	right: 0;
 	margin: 1em;
+	opacity: 0.3;
 }
 
 .logger-log {
