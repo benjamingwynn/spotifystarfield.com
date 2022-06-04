@@ -2,6 +2,7 @@
 
 body,
 html {
+	color: white;
 	background: black;
 	height: 100%;
 	width: 100%;
@@ -15,16 +16,23 @@ canvas {
 	position: absolute;
 	top: 0;
 	object-fit: cover;
+	/* image-rendering: -moz-crisp-edges;
+	image-rendering: -webkit-crisp-edges;
+	image-rendering: pixelated;
+	image-rendering: crisp-edges; */
 }
 
 body,
 html,
 * {
+	font-family: "RedAlert", monospace;
+}
+
+* {
+	color: inherit;
 	padding: 0;
 	margin: 0;
 	box-sizing: border-box;
-	font-family: "RedAlert", monospace;
-	color: inherit;
 }
 
 *[hidden] {
@@ -75,7 +83,7 @@ main {
 	flex-flow: column nowrap;
 }
 
-main article {
+article {
 	min-width: 10em;
 	max-width: 50em;
 	padding: 1em 2em 1em 1.2em;
@@ -90,28 +98,40 @@ main article {
 	opacity: 0.8;
 }
 
-main article h1 {
+body.light {
+	color: black;
+}
+
+body.light article {
+	background: rgba(255, 255, 255, 0.95);
+	color: black;
+	border-color: grey;
+}
+
+body:not(.light) input[type="range"] {
+	filter: invert(1);
+}
+
+article h1 {
 	font-size: 1.87em;
 	margin-bottom: 0.4em;
 }
 
-main article code {
+article code {
 	margin-bottom: 1em;
 }
 
-main article code {
+article code {
 	white-space: pre-wrap;
 	display: block;
 	overflow: auto;
-	background: white;
-	color: white;
+	/* background: white; */
 	padding: 0.6em;
 	border-style: double;
 	border-color: silver;
 }
 
-main article code span {
-	color: white;
+article code span {
 	display: block;
 	font-family: monospace;
 	overflow-wrap: break-word;
@@ -260,4 +280,63 @@ main article code span {
 	font-weight: bolder;
 	width: 0.5em;
 	margin-right: 0.5em;
+}
+
+.logger {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	margin: 1em;
+}
+
+.logger-log {
+	/* padding-left: 1em; */
+}
+
+/* Fix graphical bug on Safari */
+.logger-log:empty {
+	width: 0;
+	/* opacity: 0; */
+	/* transition: all 0.3s; */
+	/* display: none; */
+}
+
+#settings {
+	position: absolute;
+	right: 1em;
+	top: 1em;
+	max-width: 100%;
+	width: 30em;
+}
+
+#settings .collection {
+	display: flex;
+	flex-flow: column nowrap;
+}
+
+#settings .collection label {
+	display: flex;
+	flex-flow: row nowrap;
+}
+
+#settings .collection label span {
+	margin-right: 1em;
+	flex: 0 0 10em;
+}
+
+#settings .collection label code {
+	padding: 0 0.5ex;
+	flex: 0 0 4em;
+	margin: auto 0;
+	margin-left: 1em;
+}
+
+#settings .collection label input {
+	margin-left: auto;
+}
+
+#loading {
+	position: absolute;
+	bottom: 50%;
+	left: 1em;
 }

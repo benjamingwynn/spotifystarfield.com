@@ -87,9 +87,14 @@ export default class SpotifyStarfield {
 		return !!this.currentTrackID
 	}
 
-	private async spotify(url: string): Promise<any> {
-		const f = await fetch("https://api.spotify.com/v1" + url, {headers: {Authorization: "Bearer " + this.token}})
+	private async spotify(url: string, responseWindow: number = 10_000): Promise<any> {
+		const ctrl = new AbortController()
+		const to = setTimeout(() => {
+			ctrl.abort()
+		}, responseWindow)
+		const f = await fetch("https://api.spotify.com/v1" + url, {headers: {Authorization: "Bearer " + this.token}, signal: ctrl.signal})
 		const txt = await f.text()
+		clearTimeout(to)
 		if (txt === "") return undefined
 		const obj = JSON.parse(txt)
 		if (obj.error) {
@@ -130,7 +135,7 @@ export default class SpotifyStarfield {
 		this.pushSpeed = Math.min(1.6, Math.max(0.9, Math.abs(-(section.loudness + 10) - 20) / 20))
 		console.warn("Changed section", section, this.starfield.connectionRadiusProduct, 20 - section.loudness, this.pushSpeed)
 		this.starfield.warpSpeed = 0.005 / (this.pushSpeed * section.tempo) // base this on our already calculated push speed ^
-		this.starfield.spawnRadius = Math.max(window.innerHeight / 5, Math.min(window.innerHeight / 3, this.pushSpeed * section.tempo * 2)) * devicePixelRatio
+		this.starfield.spawnRadius = Math.max(window.innerHeight / 5, Math.min(window.innerHeight / 3, this.pushSpeed * section.tempo * 2))
 		this.starfield.rotSpeed = Math.sin(section.tempo / (360 * 2))
 	}
 
@@ -243,7 +248,8 @@ export default class SpotifyStarfield {
 
 	private async trackWatcher() {
 		try {
-			const track = await this.spotify("/me/player")
+			console.log("Trying to get current track status...")
+			const track = await this.spotify("/me/player", this.currentTrackID ? 2000 : 30_000)
 			if (!track) {
 				$("#player").hidden = true
 				this.$noTrack.hidden = false
@@ -267,6 +273,7 @@ export default class SpotifyStarfield {
 					.toString()
 					.padStart(2, "0")
 			applyTemplate(this.$playerTime, {current, end})
+			console.log(">", current)
 
 			if (track.item.id !== this.currentTrackID) {
 				this.currentTrackID = track.item.id
@@ -284,8 +291,18 @@ export default class SpotifyStarfield {
 			}
 
 			this.progress_ms = track.progress_ms
+
+			if (this.starfield.printErrors.length) {
+				this.starfield.printErrors.push("Successfully re-synced with the playing track.")
+				const n = this.starfield.printErrors.length
+				setTimeout(() => {
+					if (this.starfield.printErrors.length === n) {
+						this.starfield.printErrors = []
+					}
+				}, 1500)
+			}
 		} catch (ex) {
-			this.starfield.printErrors.push("Error getting current track.")
+			this.starfield.printErrors.push("Error getting current track. Might be out of sync.")
 			console.error(ex)
 		}
 	}
@@ -301,8 +318,36 @@ export default class SpotifyStarfield {
 		console.log("Started spotify visualizer with token:" + this.token)
 		$("#login").hidden = true
 		$("#loading").hidden = false
+
+		// *** hook up spotify settings
+		const labels = $("#spotify-settings").querySelectorAll("label")
+		for (const $label of labels) {
+			const prop = $label.dataset.prop
+			if (!prop) {
+				throw new Error("Expected data-prop attribute to be defined.")
+			}
+			const $input = $label.querySelector("input")
+			const $output = $label.querySelector("code")
+			if (!$input || !$output) {
+				throw new Error("Expected both <input> and <code> in label.")
+			}
+			const change = () => {
+				this.spotifyOptions[prop] = $input.value
+				$output.innerText = this.spotifyOptions[prop]
+			}
+			const reflect = () => {
+				$output.innerText = this.spotifyOptions[prop]
+				$input.value = this.spotifyOptions[prop]
+			}
+			setInterval(reflect, 250)
+			reflect()
+			$input.value = this.spotifyOptions[prop]
+
+			$input.addEventListener("change", change)
+		}
+
 		if (this.token) {
-			setInterval(() => this.trackWatcher(), 1000)
+			setInterval(() => this.trackWatcher(), 3000)
 			this.trackWatcher().then(() => {
 				$("#loading").hidden = true
 			})

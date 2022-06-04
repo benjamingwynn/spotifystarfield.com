@@ -76,12 +76,135 @@
 					<h2>R</h2>
 					<h3>Reload page</h3>
 				</div>
+				<div>
+					<h2>L</h2>
+					<h3>Toggle light/dark</h3>
+				</div>
+				<div>
+					<h2>S</h2>
+					<h3>Toggle secret settings</h3>
+				</div>
 				<small>This overlay hides automatically if you don't move the mouse</small>
 			</article>
+
+			<div class="logger"><code class="logger-log">This is log messages.</code></div>
 
 			<article id="player" hidden>
 				<span id="player-meta">{song} - {artist}</span>
 				<span id="player-time">{current} / {end}</span>
+			</article>
+			<article id="settings" hidden>
+				<!-- <h1>settirngs</h1> -->
+				<div class="collection" id="spotify-settings">
+					<h2>Spotify</h2>
+					<label data-prop="BEAT_STRENGTH">
+						<span>beat strength</span>
+						<input type="range" min="0" max="60" value="30" step="1" />
+						<code>000</code>
+					</label>
+					<label data-prop="BEAT_RESISTANCE">
+						<span>beat resistance</span>
+						<input type="range" min="0" max="10" value="3" step="1" />
+						<code>000</code>
+					</label>
+					<label data-prop="BEAT_MIN_CONFIDENCE">
+						<span>beat min confidence</span>
+						<input type="range" min="0" max="2" value="0.15" step="0.05" />
+						<code>000</code>
+					</label>
+					<label data-prop="TATUM_MIN_CONFIDENCE">
+						<span>tatum min confidence</span>
+						<input type="range" min="0" max="2" value="0.45" step="0.05" />
+						<code>000</code>
+					</label>
+				</div>
+
+				<div class="collection" id="starfield-settings">
+					<h2>Starfield options</h2>
+					<label data-prop="STAR_RADIUS">
+						<span>star radius</span>
+						<input type="range" min="1" max="32" step="1" />
+						<code>-</code>
+					</label>
+					<label data-prop="minConnectionRadius">
+						<span>min c rad</span>
+						<input type="range" min="0" max="300" step="1" />
+						<code>-</code>
+					</label>
+					<label data-prop="maxConnectionRadius">
+						<span>max c rad</span>
+						<input type="range" min="0" max="300" step="1" />
+						<code>-</code>
+					</label>
+					<label data-prop="edgeSize">
+						<span>edge size</span>
+						<input type="range" min="0" max="1000" step="1" />
+						<code>-</code>
+					</label>
+					<label data-prop="starPopulationDensity">
+						<span>population density</span>
+						<input type="range" min="0" max="0.01" step="0.000001" />
+						<code>-</code>
+					</label>
+					<label data-prop="starMinSpeed">
+						<span>min speed</span>
+						<input type="range" min="0" max="5" step="0.1" />
+						<code>-</code>
+					</label>
+					<label data-prop="starMaxSpeed">
+						<span>max speed</span>
+						<input type="range" min="0" max="5" step="0.1" />
+						<code>-</code>
+					</label>
+					<label data-prop="worldSpeed">
+						<span>target world speed</span>
+						<input type="range" min="0.001" max="1" step="0.001" />
+						<code>-</code>
+					</label>
+					<label data-prop="connectionStarPopulationDensity">
+						<span>connection density</span>
+						<input type="range" min="0" max="0.0001" step="0.000002" />
+						<code>-</code>
+					</label>
+					<label data-prop="starPulseSpeed">
+						<span>pulse speed</span>
+						<input type="range" min="0" max="0.001" step="0.00005" />
+						<code>-</code>
+					</label>
+				</div>
+
+				<div class="collection" id="this-settings">
+					<h2>overrides</h2>
+					<label data-prop="warpSpeed">
+						<span>warp speed</span>
+						<input type="range" min="0" max="0.001" step="0.0000r1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="rotSpeed">
+						<span>rot speed</span>
+						<input type="range" min="0" max="1" step="0.005" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="spawnRadius">
+						<span>spawn radius</span>
+						<input type="range" min="0" max="1000" step="1" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="actualWorldSpeed">
+						<span>real world speed</span>
+						<input type="range" min="0.001" max="1" step="0.001" />
+						<code>-</code>
+					</label>
+
+					<label data-prop="maximumStarPopulation">
+						<span>max star population</span>
+						<input type="range" min="0" max="1000" step="1" />
+						<code>-</code>
+					</label>
+				</div>
 			</article>
 		</main>
 		<script src="./stars.js"></script>

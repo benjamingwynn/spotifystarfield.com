@@ -68,8 +68,8 @@ export default abstract class XCanvas {
 		// const height = box.height
 
 		this.scale = window.devicePixelRatio || 1
-		this.canvas.width = Math.floor(width * this.scale)
-		this.canvas.height = Math.floor(height * this.scale)
+		this.canvas.width = Math.floor(width)
+		this.canvas.height = Math.floor(height)
 
 		// this.left = 0
 		this.right = this.canvas.width

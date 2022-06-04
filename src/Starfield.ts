@@ -36,7 +36,7 @@ class StarfieldOptions {
 	/** Size around the canvas in pixels where stars will start to fade out. */
 	edgeSize = 400
 	/** Number of stars per pixels on the screen */
-	starPopulationDensity = 0.000045 / window.devicePixelRatio
+	starPopulationDensity = 0.000045
 	/** Whether debug information should be drawn on the screen. */
 	drawDebug = false
 	/** The minimum speed a star can be spawned with. */
@@ -48,7 +48,7 @@ class StarfieldOptions {
 	/** The rate the world speed changes at */
 	worldSpeedSpeed = 0.00065
 	/** Number of connection stars per pixel on the screen. */
-	connectionStarPopulationDensity = 0.000023 / window.devicePixelRatio
+	connectionStarPopulationDensity = 0.00002
 	/** Whether keyboard shortcuts should be displayed on the screen. */
 	showKeyboardShortcuts = false
 	/** How fast star radii change in size when the volume of the track changes. */
@@ -72,8 +72,9 @@ export default class Starfield extends XCanvas {
 	warpSpeed = 0.004
 	rot = 1
 	rotSpeed = 0.0
-	spawnRadius = 400 * window.devicePixelRatio
+	spawnRadius = 400
 
+	private lightMode = true
 	public printErrors: string[] = []
 
 	layout() {
@@ -103,6 +104,11 @@ export default class Starfield extends XCanvas {
 		// Navigation
 		if (e.key === "f") document.fullscreen ? document.exitFullscreen() : document.documentElement.requestFullscreen()
 		if (e.key === "r") location.reload()
+
+		if (e.key === "l") this.switchTheme(!this.lightMode)
+		if (e.key === "s") {
+			$("#settings").hidden = !$("#settings").hidden
+		}
 	}
 
 	private secretKeyboardShortcutLines = this.secretKeyboardShortcuts.toString().split("\n")
@@ -146,7 +152,8 @@ export default class Starfield extends XCanvas {
 			return alpha
 		}
 
-		const lagModifier = deltaT / 16.67
+		// allow max 2 frames of skip
+		const lagModifier = Math.min(2, deltaT / 16.67)
 
 		this.nLines = 0
 		this.canvas.width = this.canvas.width // this clears the canvas
@@ -155,8 +162,8 @@ export default class Starfield extends XCanvas {
 			this.actualWorldSpeed = this.options.worldSpeed
 		}
 		if (this.options.worldSpeed) {
-			if (this.actualWorldSpeed > this.options.worldSpeed) this.actualWorldSpeed -= this.options.worldSpeedSpeed * lagModifier
-			if (this.actualWorldSpeed < this.options.worldSpeed) this.actualWorldSpeed += this.options.worldSpeedSpeed * lagModifier
+			if (this.actualWorldSpeed > this.options.worldSpeed) this.actualWorldSpeed -= this.options.worldSpeedSpeed
+			if (this.actualWorldSpeed < this.options.worldSpeed) this.actualWorldSpeed += this.options.worldSpeedSpeed
 		}
 
 		let worldSpeed = this.actualWorldSpeed || 1
@@ -270,7 +277,19 @@ export default class Starfield extends XCanvas {
 			this.ctx.arc(star.px, star.py, this.options.drawDebug ? 16 : this.options.STAR_RADIUS, 0, 2 * Math.PI)
 
 			const alpha = getAlpha(star)
-			this.ctx.fillStyle = this.options.drawDebug ? (alpha === 1 ? "green" : "red") : `rgba(100,100,100,${alpha})`
+			if (!star.color) {
+				switch ((Math.random() * 2) | 0) {
+					case 0: {
+						star.color = "green"
+						break
+					}
+					case 1: {
+						star.color = "red"
+						break
+					}
+				}
+			}
+			this.ctx.fillStyle = this.options.drawDebug ? (alpha === 1 ? "green" : "red") : this.lightMode ? `rgba(${star.color}, ${0.5})` : `rgba(100,100,100,${alpha})`
 			// this.ctx.fillStyle = "black"
 			star.alpha = alpha
 			this.ctx.fill()
@@ -352,13 +371,7 @@ export default class Starfield extends XCanvas {
 
 		if (this.options.showKeyboardShortcuts) for (let i = 0, y = 300 * 3; i < this.secretKeyboardShortcutLines.length; i++, y += 12) this.ctx.fillText(this.secretKeyboardShortcutLines[i], 12, y)
 
-		if (this.printErrors.length) {
-			this.ctx.fillStyle = "red"
-			for (let i = 0; i < this.printErrors.length; i++) {
-				const line = this.printErrors[i]
-				this.ctx.fillText(line, 12, this.canvas.height - 96 - 16 * (i + 1))
-			}
-		}
+		$(".logger-log").innerText = this.printErrors.join("\n")
 	}
 
 	resize(lastWidth: number, lastHeight: number, newWidth: number, newHeight: number) {
@@ -463,5 +476,98 @@ export default class Starfield extends XCanvas {
 
 	public start() {
 		super.start()
+		this.switchTheme()
+
+		// *** hook up starfield settings
+		{
+			const labels = $("#starfield-settings").querySelectorAll("label")
+			for (const $label of labels) {
+				let block = false
+				const prop = $label.dataset.prop
+				if (!prop) {
+					throw new Error("Expected data-prop attribute to be defined.")
+				}
+				const $input = $label.querySelector("input")
+				const $output = $label.querySelector("code")
+				if (!$input || !$output) {
+					throw new Error("Expected both <input> and <code> in label.")
+				}
+				const change = () => {
+					this.options[prop] = parseFloat($input.value)
+					$output.innerText = this.options[prop]
+				}
+				if (this.options[prop] === undefined) {
+					throw new Error("Expected " + prop + " to be defined on this.options.")
+				}
+				const reflect = () => {
+					$output.innerHTML = this.options[prop]
+					$input.value = this.options[prop]
+				}
+				$label.onmouseenter = () => (block = true)
+				$label.onmouseleave = () => (block = false)
+				reflect()
+
+				setInterval(() => {
+					if (block) {
+						console.log("block", $label)
+						return
+					}
+					reflect()
+				}, 1000)
+
+				$input.addEventListener("change", change)
+			}
+		}
+
+		// *** hook up override settings
+		{
+			const labels = $("#this-settings").querySelectorAll("label")
+			for (const $label of labels) {
+				let block = false
+
+				const prop = $label.dataset.prop
+				if (!prop) {
+					throw new Error("Expected data-prop attribute to be defined.")
+				}
+				const $input = $label.querySelector("input")
+				const $output = $label.querySelector("code")
+				if (!$input || !$output) {
+					throw new Error("Expected both <input> and <code> in label.")
+				}
+				const change = () => {
+					this[prop] = parseFloat($input.value)
+					$output.innerText = this[prop]
+				}
+				const reflect = () => {
+					if (block) {
+						console.log("block", $label)
+						return
+					}
+					$output.innerText = this[prop]
+					$input.value = this[prop]
+				}
+				setInterval(reflect, 250)
+				$label.onmouseenter = () => (block = true)
+				$label.onmouseleave = () => (block = false)
+				reflect()
+				$input.value = this[prop]
+
+				$input.addEventListener("change", change)
+			}
+		}
+	}
+
+	public switchTheme(toLight?: boolean) {
+		if (toLight !== undefined) {
+			this.lightMode = toLight
+		}
+		// if light body
+		if (this.lightMode) {
+			document.body.style.background = "white"
+			document.body.classList.add("light")
+		} else {
+			document.body.style.background = ""
+			document.body.classList.remove("light")
+		}
 	}
 }
