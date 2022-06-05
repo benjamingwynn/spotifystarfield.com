@@ -77,7 +77,7 @@ export default class Starfield extends XCanvas {
 	rotSpeed = 0.0
 	spawnRadius = 400
 
-	private lightMode = true
+	private lightMode = false
 	public printErrors: string[] = []
 
 	layout() {
