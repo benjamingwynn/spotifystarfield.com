@@ -35,19 +35,21 @@
 		<main>
 			<article id="login">
 				<img src="/screenshot.png" />
-				<h1 id="logo">Spotify's missing visualizer</h1>
+				<h1 id="logo">Spotify starfield</h1>
 				<a id="login-btn" href="https://accounts.spotify.com/authorize?client_id=6ed539a873ed442fac572b7f679833a9&redirect_uri=https%3A%2F%2Fspotify.benjamingwynn.com&scope=user-read-playback-state%20user-read-private%20user-read-email&response_type=token&state=123">Login through Spotify</a>
-				<h2>What is this?</h2>
-				<p>This is a music visualizer made for Spotify. It generates a starfield of dots and lines, and then adjust the physics conditions and colors of the starfield as the music plays based off of data from the music, such as its timings of beats, tempo, key and more.</p>
-				<h2>How does it work?</h2>
-				<p>1. Login here through Spotify with the button above</p>
-				<p>2. Play music on Spotify on your computer or phone</p>
-				<p>3. Enjoy the visualization!</p>
-				<h2>Privacy/Technical</h2>
+				<p>Spotify starfield is a music visualizer made for Spotify. It generates a starfield of dots and lines, and then adjust the physics conditions and colors of the starfield as the music plays based off of data from the music, such as tempo, key, loudness and more.</p>
+				<h2>Privacy</h2>
 				<p>This website uses the official login portal provided by Spotify and has no access to your information other than current playback status, all data is processed locally and is never collected or sent to an external server.</p>
-				<p>Source code is <a href="https://github.com/benjamingwynn/spotify.benjamingwynn.com">available on Github.</a> Pull requests are welcome.</p>
-				<p>Neither myself or this project are legally affiliated with Spotify.</p>
-				<h3><small>created by benjamin gwynn</small></h3>
+				<p>This site contacts no other API other than Spotify.</p>
+				<h2>Technical</h2>
+				<p>This is is prototype, a proof-of-concept, performance won't be great.</p>
+				<p>Source code is <a href="https://github.com/benjamingwynn/spotify.benjamingwynn.com" target="noopener">available on Github.</a> This data is provided by <a href="https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-analysis" target="noopener">Spotify's Analytics API</a></p>
+				<h3>
+					<a href="https://benjamnigwynn.com" target="noopener"><small>created by Benjamin Gwynn</small></a>
+				</h3>
+				<p>
+					<small>This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with Spotify, or any of its subsidiaries or its affiliates. The official Spotify website can be found at <a href="https://spotify.com" target="noopener">https://spotify.com</a></small>
+				</p>
 			</article>
 			<article id="loading" hidden>
 				<h1>CONNECTING TO SPOTIFY...</h1>
@@ -87,7 +89,7 @@
 				<small>This overlay hides automatically if you don't move the mouse</small>
 			</article>
 
-			<div class="logger"><code class="logger-log">This is log messages.</code></div>
+			<div class="logger"><code class="logger-log"></code></div>
 
 			<article id="player" hidden>
 				<span id="player-meta">{song} - {artist}</span>

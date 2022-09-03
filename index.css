@@ -86,6 +86,8 @@ main {
 article {
 	min-width: 10em;
 	max-width: 50em;
+	max-height: calc(100vh - 4em);
+	overflow-y: auto;
 	padding: 1em 2em 1em 1.2em;
 	margin: auto auto 1em 0;
 	background: black;
@@ -207,6 +209,7 @@ article code span {
 
 #login-btn {
 	background: rgb(74, 196, 74);
+	animation: glow 1s infinite alternate ease-in-out;
 	color: white;
 	opacity: 1;
 	font-size: 1.25em;
@@ -214,35 +217,57 @@ article code span {
 	padding: 1em 2em;
 	display: block;
 	text-decoration: none;
-	margin: 1em auto;
-	font-weight: bolder;
+	margin: 1.2em auto;
+	font-weight: bold;
 	text-transform: uppercase;
+	transition: 0.15s all;
+}
+
+@keyframes glow {
+	from {
+		background: rgb(0, 141, 19);
+		border-color: rgb(11, 62, 18);
+	}
+
+	to {
+		background: rgb(53, 163, 68);
+		border-color: rgb(0, 91, 12);
+	}
 }
 
 #login-btn:hover {
-	background: rgb(83, 238, 83);
+	background: rgb(131, 255, 131);
+	transform: scale(1.2);
 }
 
 #logo {
 	font-size: 3.5em;
 	text-align: center;
 	text-transform: uppercase;
-	animation: wow 5s infinite alternate ease-in-out;
+	animation: wow 1.3s infinite alternate ease-in-out, colors 5s infinite alternate ease-in-out;
 	overflow: visible;
 	text-overflow: clip;
 	word-break: keep-all;
+	margin-bottom: 0em;
+}
+
+@keyframes colors {
+	from {
+		color: rgb(225, 0, 255);
+	}
+	to {
+		color: rgb(70, 177, 209);
+	}
 }
 
 @keyframes wow {
 	from {
 		transform: scaleX(1);
-		color: rgb(225, 0, 255);
 		letter-spacing: 1px;
 	}
 	to {
-		letter-spacing: 2px;
-		transform: scaleX(0.9);
-		color: rgb(70, 177, 209);
+		letter-spacing: 6px;
+		transform: scaleY(1.2) scaleX(1.05);
 	}
 }
 
@@ -253,7 +278,7 @@ article code span {
 
 #login h2,
 #login h3 {
-	margin-top: 1em;
+	margin: 1ex 0;
 }
 
 #keyboard {
