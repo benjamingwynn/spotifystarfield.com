@@ -1,9 +1,11 @@
 {
 	"name": "spotify-starfield",
 	"version": "1.0.0",
+	"private": "true",
 	"description": "Starfield simulation written for Spotify",
 	"main": "stars.js",
 	"scripts": {
+		"start": "npm run dev",
 		"dev": "webpack-dev-server",
 		"build": "webpack",
 		"test": "echo \"Error: no test specified\" && exit 1"
@@ -12,8 +14,8 @@
 		"type": "git",
 		"url": "git+https://github.com/benjamingwynn/spotify.benjamingwynn.com.git"
 	},
-	"author": "Benjamin M. Gwynn",
-	"license": "ISC",
+	"author": "Benjamin Gwynn <starfield@benjamingwynn.com>",
+	"license": "SEE LICENSE IN LICENSE",
 	"bugs": {
 		"url": "https://github.com/benjamingwynn/spotify.benjamingwynn.com/issues"
 	},
