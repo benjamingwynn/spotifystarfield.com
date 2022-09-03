@@ -88,9 +88,6 @@ export default class Starfield extends XCanvas {
 	}
 
 	private secretKeyboardShortcuts(e: {key: string}) {
-		//
-		// You found the secret keyboard shortcuts!
-		//
 		const opt = this.options
 
 		if (e.key === "F1") opt.showKeyboardShortcuts = !opt.showKeyboardShortcuts
@@ -105,7 +102,14 @@ export default class Starfield extends XCanvas {
 		}
 
 		// Navigation
-		if (e.key === "f") document.fullscreen ? document.exitFullscreen() : document.documentElement.requestFullscreen()
+		if (e.key === "f") {
+			if ("webkitRequestFullScreen" in document.documentElement) {
+				// @ts-expect-error required for Safari
+				document.documentElement.webkitRequestFullScreen()
+			} else {
+				document.fullscreen ? document.exitFullscreen() : document.documentElement.requestFullscreen()
+			}
+		}
 		if (e.key === "r") location.reload()
 
 		if (e.key === "l") this.switchTheme(!this.lightMode)
@@ -113,8 +117,6 @@ export default class Starfield extends XCanvas {
 			$("#settings").hidden = !$("#settings").hidden
 		}
 	}
-
-	private secretKeyboardShortcutLines = this.secretKeyboardShortcuts.toString().split("\n")
 
 	private direction: 1 | -1 = 1 as const
 
@@ -372,8 +374,6 @@ export default class Starfield extends XCanvas {
 			this.ctx.fillText(`Rotation ${this.rotSpeed} = ${this.rot.toFixed(1)}`, 24, this.canvas.height / 2 + 64)
 			//  ROT:${this.rot.toFixed(2)} ROTSPEED:${this.rotSpeed}
 		}
-
-		if (this.options.showKeyboardShortcuts) for (let i = 0, y = 300 * 3; i < this.secretKeyboardShortcutLines.length; i++, y += 12) this.ctx.fillText(this.secretKeyboardShortcutLines[i], 12, y)
 
 		$(".logger-log").innerText = this.printErrors.join("\n")
 	}
