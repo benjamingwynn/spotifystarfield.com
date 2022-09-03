@@ -128,7 +128,7 @@ export default class Starfield extends XCanvas {
 		// setInterval(() => {
 		// 	this.direction === 1 ? (this.direction = -1) : (this.direction = 1)
 		// }, 1000)
-		$("main").hidden = localStorage.getItem("hideUI") == "1"
+		$("main").hidden = localStorage.getItem("hideUI") == "1" && $("#login").hidden
 	}
 
 	draw(t: number, deltaT: number, ctx: CanvasRenderingContext2D) {
