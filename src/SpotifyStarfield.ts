@@ -101,13 +101,18 @@ export default class SpotifyStarfield {
 	}
 
 	private async spotify(url: string, responseWindow: number = 10_000): Promise<any> {
+		const t = performance.now()
 		const ctrl = new AbortController()
-		const to = setTimeout(() => {
-			ctrl.abort()
-		}, responseWindow)
+		let to: ReturnType<typeof setInterval> | undefined
+		if (responseWindow !== Infinity) {
+			to = setTimeout(() => {
+				ctrl.abort()
+			}, responseWindow)
+		}
 		const f = await fetch("https://api.spotify.com/v1" + url, {headers: {Authorization: "Bearer " + this.token}, signal: ctrl.signal})
 		const txt = await f.text()
-		clearTimeout(to)
+		if (to) clearTimeout(to)
+		console.log(`Spotify endpoint "${url}" responded in`, performance.now() - t, "/", responseWindow)
 		if (txt === "") return undefined
 		const obj = JSON.parse(txt)
 		if (obj.error) {
@@ -121,7 +126,7 @@ export default class SpotifyStarfield {
 	}
 
 	private async getAnalysis(trackId: string): Promise<SpotifyAnalysis> {
-		return <SpotifyAnalysis>await this.spotify("/audio-analysis/" + trackId)
+		return <SpotifyAnalysis>await this.spotify("/audio-analysis/" + trackId, Infinity)
 	}
 
 	private pushSpeed = 1
@@ -172,94 +177,111 @@ export default class SpotifyStarfield {
 	private progress_ms = 0
 
 	private async resync(track: SpotifyTrack) {
+		if (!track.item.id) {
+			console.warn("No currently playing track?")
+			return
+		}
+		const stillGetting = setInterval(() => {
+			this.starfield.printErrors.push("Still getting analysis...")
+		}, 1000)
+
 		const ttt = performance.now()
-		if (track.item.id) {
-			console.log("Getting analysis...")
-			const analysis = await this.getAnalysis(track.item.id)
-			console.log(analysis)
+		let analysis
+		while (!analysis) {
+			try {
+				this.starfield.printErrors.push("Getting analysis...")
+				analysis = await this.getAnalysis(track.item.id)
+			} catch (ex) {
+				console.error("[download analysis failure]", ex)
+				this.starfield.printErrors.push("Failed getting analysis, retrying...")
+			}
+		}
 
-			// Adjust timing, accounting for network latency
-			track.progress_ms += performance.now() - ttt
+		clearInterval(stillGetting)
+		this.starfield.printErrors = []
+		console.log("Got analysis:", analysis)
 
-			// remove all of the items that are already used
-			const beats = analysis.beats.filter((beat) => beat.confidence > this.spotifyOptions.BEAT_MIN_CONFIDENCE)
-			const tatums = analysis.tatums.filter((tatum) => tatum.confidence > this.spotifyOptions.TATUM_MIN_CONFIDENCE)
-			const segments = analysis.segments
-			const sections = analysis.sections
+		// Adjust timing, accounting for network latency
+		track.progress_ms += performance.now() - ttt
 
-			// Init
-			this.startTime = performance.now()
+		// remove all of the items that are already used
+		const beats = analysis.beats.filter((beat) => beat.confidence > this.spotifyOptions.BEAT_MIN_CONFIDENCE)
+		const tatums = analysis.tatums.filter((tatum) => tatum.confidence > this.spotifyOptions.TATUM_MIN_CONFIDENCE)
+		const segments = analysis.segments
+		const sections = analysis.sections
 
-			let beatIndex = beats.findIndex((b) => b.start * 1000 >= track.progress_ms)
-			if (beatIndex === -1) beatIndex = 0
+		// Init
+		this.startTime = performance.now()
 
-			let tatumIndex = tatums.findIndex((t) => t.start * 1000 >= track.progress_ms)
-			if (tatumIndex === -1) tatumIndex = 0
+		let beatIndex = beats.findIndex((b) => b.start * 1000 >= track.progress_ms)
+		if (beatIndex === -1) beatIndex = 0
 
-			this.segment = undefined
-			this.section = undefined
+		let tatumIndex = tatums.findIndex((t) => t.start * 1000 >= track.progress_ms)
+		if (tatumIndex === -1) tatumIndex = 0
 
-			console.log("All sections:", sections)
+		this.segment = undefined
+		this.section = undefined
 
-			let loopID = Math.floor(Math.random() * 1024 * 1024).toString(16)
-			/** This fires every frame. It keeps `segment` and `section` in sync, and fires the `hitTatum` and `hitBeat` calls at the right time. */
-			console.log("Started spotifyBeatKeeper loop #" + loopID)
-			const spotifyBeatKeeper = () => {
-				if (track.item.id !== this.currentTrackID) {
-					console.log("Left spotifyBeatKeeper loop #" + loopID)
-					return // escape this if changed
-				}
+		console.log("All sections:", sections)
 
-				if (!this.paused) {
-					const progress_ms = track.progress_ms + (performance.now() - this.startTime)
-
-					if (beatIndex < beats.length && progress_ms >= beats[beatIndex].start * 1000) {
-						this.hitBeat(beats[beatIndex])
-						beatIndex++
-					}
-
-					if (tatumIndex < tatums.length && progress_ms >= tatums[tatumIndex].start * 1000) {
-						this.hitTatum(tatums[tatumIndex])
-						tatumIndex++
-					}
-
-					let changedSegment = false
-					for (let i = 0; i < segments.length; i++) {
-						const s = segments[i]
-						if (progress_ms >= s.start * 1000) {
-							if (!this.segment) {
-								this.segment = s
-								changedSegment = true
-							} else if (this.segment && s.start > this.segment.start) {
-								this.segment = s
-								changedSegment = true
-							}
-						}
-					}
-					if (changedSegment && this.segment) this.newSegment(this.segment)
-
-					let changedSection = false
-					for (let i = 0; i < sections.length; i++) {
-						const s = sections[i]
-						if (progress_ms >= s.start * 1000) {
-							if (!this.section) {
-								this.section = s
-								changedSection = true
-							} else if (this.section && s.start > this.section.start) {
-								this.section = s
-								changedSection = true
-							}
-						}
-					}
-					if (changedSection && this.section) this.newSection(this.section)
-				}
-
-				requestAnimationFrame(spotifyBeatKeeper)
+		let loopID = Math.floor(Math.random() * 1024 * 1024).toString(16)
+		/** This fires every frame. It keeps `segment` and `section` in sync, and fires the `hitTatum` and `hitBeat` calls at the right time. */
+		console.log("Started spotifyBeatKeeper loop #" + loopID)
+		const spotifyBeatKeeper = () => {
+			if (track.item.id !== this.currentTrackID) {
+				console.log("Left spotifyBeatKeeper loop #" + loopID)
+				return // escape this if changed
 			}
 
-			spotifyBeatKeeper()
-			// this.newSection(this.section)
+			if (!this.paused) {
+				const progress_ms = track.progress_ms + (performance.now() - this.startTime)
+
+				if (beatIndex < beats.length && progress_ms >= beats[beatIndex].start * 1000) {
+					this.hitBeat(beats[beatIndex])
+					beatIndex++
+				}
+
+				if (tatumIndex < tatums.length && progress_ms >= tatums[tatumIndex].start * 1000) {
+					this.hitTatum(tatums[tatumIndex])
+					tatumIndex++
+				}
+
+				let changedSegment = false
+				for (let i = 0; i < segments.length; i++) {
+					const s = segments[i]
+					if (progress_ms >= s.start * 1000) {
+						if (!this.segment) {
+							this.segment = s
+							changedSegment = true
+						} else if (this.segment && s.start > this.segment.start) {
+							this.segment = s
+							changedSegment = true
+						}
+					}
+				}
+				if (changedSegment && this.segment) this.newSegment(this.segment)
+
+				let changedSection = false
+				for (let i = 0; i < sections.length; i++) {
+					const s = sections[i]
+					if (progress_ms >= s.start * 1000) {
+						if (!this.section) {
+							this.section = s
+							changedSection = true
+						} else if (this.section && s.start > this.section.start) {
+							this.section = s
+							changedSection = true
+						}
+					}
+				}
+				if (changedSection && this.section) this.newSection(this.section)
+			}
+
+			requestAnimationFrame(spotifyBeatKeeper)
 		}
+
+		spotifyBeatKeeper()
+		// this.newSection(this.section)
 	}
 
 	private async trackWatcher() {
