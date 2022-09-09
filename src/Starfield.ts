@@ -104,8 +104,13 @@ export default class Starfield extends XCanvas {
 		// Navigation
 		if (e.key === "f") {
 			if ("webkitRequestFullScreen" in document.documentElement) {
-				// @ts-expect-error required for Safari
-				document.documentElement.webkitRequestFullScreen()
+				if (document.fullscreen) {
+					// @ts-expect-error experimental fullscreen exit for Safari
+					document.documentElement.webkitExitFullscreen()
+				} else {
+					// @ts-expect-error required for Safari
+					document.documentElement.webkitRequestFullScreen()
+				}
 			} else {
 				document.fullscreen ? document.exitFullscreen() : document.documentElement.requestFullscreen()
 			}
@@ -469,7 +474,19 @@ export default class Starfield extends XCanvas {
 
 				for (let ic = 0; ic < nStarsToSpawn; ic++) {
 					if (this.nConnectionStars < this.maxConnectionStars) {
-						if (star.alpha >= 1) this.addConnectionStar(px, py)
+						if (star.alpha >= 1) {
+							if (this.nConnectionStars < this.maxConnectionStars / 2) {
+								// random either conn star or regular star
+								if (Math.floor(Math.random() * 2)) {
+									this.addConnectionStar(px, py)
+								} else {
+									this.addStar(px, py)
+								}
+							} else {
+								// always conn star
+								this.addConnectionStar(px, py)
+							}
+						}
 					} else {
 						this.addStar(px, py)
 					}
