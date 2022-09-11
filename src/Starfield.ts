@@ -83,8 +83,8 @@ export default class Starfield extends XCanvas {
 	layout() {
 		super.layout()
 		const tpx = this.canvas.width * this.canvas.height
-		this.maxConnectionStars = Math.floor(tpx * this.options.connectionStarPopulationDensity)
-		this.maximumStarPopulation = Math.floor(tpx * this.options.starPopulationDensity)
+		this.maxConnectionStars = Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity))
+		this.maximumStarPopulation = Math.max(50, Math.floor(tpx * this.options.starPopulationDensity))
 	}
 
 	private secretKeyboardShortcuts(e: {key: string}) {
@@ -442,56 +442,46 @@ export default class Starfield extends XCanvas {
 	}
 
 	public addFirstConnectionStar() {
-		this.addConnectionStar(this.canvas.width / 2, this.canvas.height / 2)
+		this.addConnectionStar(this.canvas.width / 2, this.canvas.height / 2, -0, -0)
 	}
 
-	public spawnTick(nStarsToSpawn = 1) {
+	public spawnTick() {
 		if (this.nStars >= this.maximumStarPopulation) return
 
-		if (this.nConnectionStars === 0) {
+		if (this.nStars === 0) {
 			this.addFirstConnectionStar()
-		} else {
-			for (let i = this.nConnectionStars - 1; i >= 0; i--) {
-				const star = this.connectionStars[i]
-				if (!star) throw new Error("Expected a star in the array at this position.")
-				const px = star.px
-				const py = star.py
+			return
+		}
+		let nSpawned = 0
 
-				// distance from centre
-				const dcx = Math.abs(this.canvas.width / 2 - star.px)
-				const dcy = Math.abs(this.canvas.height / 2 - star.py)
+		for (let i = this.nStars - 1; i >= 0; i--) {
+			const star = this.stars[i]
+			if (!star) throw new Error("Expected a star in the array at this position.")
+			const px = star.px
+			const py = star.py
 
-				const dt = Math.sqrt(dcx * dcx + dcy * dcy)
-				if (dt > this.spawnRadius) {
-					continue
-				}
+			// distance from centre
+			const dcx = Math.abs(this.canvas.width / 2 - star.px)
+			const dcy = Math.abs(this.canvas.height / 2 - star.py)
 
-				// const dist = this.spawnBoxSize / 2
-
-				// if (dcx > dist || dcy > dist) {
-				// 	continue
-				// }
-
-				for (let ic = 0; ic < nStarsToSpawn; ic++) {
-					if (this.nConnectionStars < this.maxConnectionStars) {
-						if (star.alpha >= 1) {
-							if (this.nConnectionStars < this.maxConnectionStars / 2) {
-								// random either conn star or regular star
-								if (Math.floor(Math.random() * 2)) {
-									this.addConnectionStar(px, py)
-								} else {
-									this.addStar(px, py)
-								}
-							} else {
-								// always conn star
-								this.addConnectionStar(px, py)
-							}
-						}
-					} else {
-						this.addStar(px, py)
-					}
-				}
+			const dt = Math.sqrt(dcx * dcx + dcy * dcy)
+			if (dt > this.spawnRadius) {
+				continue
 			}
+
+			if (this.nConnectionStars < this.maxConnectionStars) {
+				if (star.alpha >= 1) {
+					this.addConnectionStar(px, py)
+					nSpawned++
+				}
+			} else {
+				this.addStar(px, py)
+				// do not count non-connection stars
+			}
+		}
+
+		if (nSpawned === 0) {
+			this.addFirstConnectionStar()
 		}
 	}
 

@@ -101,7 +101,7 @@ export default class SpotifyStarfield {
 	}
 
 	private async spotify(url: string, responseWindow: number = 10_000): Promise<any> {
-		const t = performance.now()
+		// const t = performance.now()
 		const ctrl = new AbortController()
 		let to: ReturnType<typeof setInterval> | undefined
 		if (responseWindow !== Infinity) {
@@ -112,7 +112,7 @@ export default class SpotifyStarfield {
 		const f = await fetch("https://api.spotify.com/v1" + url, {headers: {Authorization: "Bearer " + this.token}, signal: ctrl.signal})
 		const txt = await f.text()
 		if (to) clearTimeout(to)
-		console.log(`Spotify endpoint "${url}" responded in`, performance.now() - t, "/", responseWindow)
+		// console.log(`Spotify endpoint "${url}" responded in`, performance.now() - t, "/", responseWindow)
 		if (txt === "") return undefined
 		const obj = JSON.parse(txt)
 		if (obj.error) {
@@ -152,7 +152,7 @@ export default class SpotifyStarfield {
 		this.starfield.options.worldSpeed = section.tempo / tempoWorldSpeed
 		this.starfield.pallette = this.spotifyOptions.COLORS[section.key]
 		this.pushSpeed = Math.min(pushSpeedMax, Math.max(pushSpeedMin, Math.abs(-(section.loudness + loudnessExtra) - loudnessBaseline) / loudnessScale))
-		console.warn("Changed section", section, this.starfield.connectionRadiusProduct, loudnessScale - section.loudness, this.pushSpeed)
+		// console.warn("Changed section", section, this.starfield.connectionRadiusProduct, loudnessScale - section.loudness, this.pushSpeed)
 		this.starfield.warpSpeed = warpSpeedScaler / (this.pushSpeed * section.tempo) // base this on our already calculated push speed ^
 		this.starfield.spawnRadius = Math.max(window.innerHeight / 5, Math.min(window.innerHeight / 3, this.pushSpeed * section.tempo * spawnRadiusProduct))
 		this.starfield.rotSpeed = Math.sin(section.tempo / rotSpeedTempoDiv)
@@ -183,7 +183,7 @@ export default class SpotifyStarfield {
 		}
 		const stillGetting = setInterval(() => {
 			this.starfield.printErrors.push("Still getting analysis...")
-		}, 1000)
+		}, 3000)
 
 		const ttt = performance.now()
 		let analysis
@@ -287,7 +287,7 @@ export default class SpotifyStarfield {
 	private async trackWatcher() {
 		try {
 			console.log("Trying to get current track status...")
-			const track = await this.spotify("/me/player", this.currentTrackID ? 2000 : 30_000)
+			const track = await this.spotify("/me/player", this.currentTrackID ? 10_000 : 30_000)
 			if (!track) {
 				$("#player").hidden = true
 				this.$noTrack.hidden = false
@@ -385,7 +385,7 @@ export default class SpotifyStarfield {
 		}
 
 		if (this.token) {
-			setInterval(() => this.trackWatcher(), 3000)
+			setInterval(() => this.trackWatcher(), 6000)
 			this.trackWatcher().then(() => {
 				$("#loading").hidden = true
 			})
