@@ -50,7 +50,7 @@ class StarfieldOptions {
 	/** The rate the world speed changes at */
 	worldSpeedSpeed = 0.00065
 	/** Number of connection stars per pixel on the screen. */
-	connectionStarPopulationDensity = 0.00000001
+	connectionStarPopulationDensity = 0.00002
 	/** Whether keyboard shortcuts should be displayed on the screen. */
 	showKeyboardShortcuts = false
 	/** How fast star radii change in size when the volume of the track changes. */
@@ -89,15 +89,16 @@ export default class Starfield extends XCanvas {
 	nSpawn2: number = 0
 	nSpawn3: number = 0
 
-	get maxConnectionStars() {
-		const tpx = this.canvas.width * this.canvas.height
-		return Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity * this.spawnRadius))
-	}
+	private maxConnectionStars
+	// get maxConnectionStars() {
+	// 	const tpx = this.canvas.width * this.canvas.height
+	// 	return Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity * this.spawnRadius))
+	// }
 
 	layout() {
 		super.layout()
 		const tpx = this.canvas.width * this.canvas.height
-		// this.maxConnectionStars = Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity * this.spawnRadius))
+		this.maxConnectionStars = Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity))
 		this.maximumStarPopulation = Math.max(75, Math.floor(tpx * this.options.starPopulationDensity))
 	}
 
@@ -380,25 +381,27 @@ export default class Starfield extends XCanvas {
 			this.ctx.restore()
 		}
 
-		if (this.options.showKeyboardShortcuts || this.options.drawDebugText || this.printErrors.length) {
+		if (this.options.showKeyboardShortcuts || this.options.drawDebugText || this.options.drawDebug || this.printErrors.length) {
 			this.ctx.font = "12px monospace"
 			this.ctx.fillStyle = "grey"
 		}
 
-		if (this.options.drawDebugText) {
+		if (this.options.drawDebugText || this.options.drawDebug) {
 			const pad = (this.canvas.height - window.innerHeight) / 2
-			const lines: string[] = [
-				//
-				`spotify starfield ${pkgJSON.version}`,
-				`${this.fps.toFixed(2)}FPS. dT:${deltaT.toFixed(2)} lag:${lagModifier.toFixed(2)}`,
-				`${this.canvas.width}x${this.canvas.height} (${window.innerWidth}x${window.innerHeight}@${this.scale}). XS: ${this.xs}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}.`,
-				`${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines,`,
-				`WarpSpeed:${this.warpSpeed}`,
-				`Rotation ${this.rotSpeed} = ${this.rot.toFixed(1)}°`,
-				`StarSpeed: ${this.options.starMinSpeed}-${this.options.starMaxSpeed}. WorldSpeed: ${this.actualWorldSpeed}/${this.options.worldSpeed}. StarRadii: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}.`,
-				`SpawnArea. Radius: ${this.spawnRadius}. spawnStars: ${this.nStarsInSpawn}. cSpawnStars: ${this.nConnectionStarsInSpawn}/${this.alwaysHaveThisManyConnectionStarsInSpawn}. lastTick: ${this.lastSpawnTick}`,
-				`0: ${this.nSpawn0.toString().padStart(2, "0")}. 1: ${this.nSpawn1.toString().padStart(2, "0")}. 2: ${this.nSpawn2.toString().padStart(2, "0")}. 3: ${this.nSpawn3.toString().padStart(2, "0")}.`,
-			]
+			const lines: string[] = this.options.drawDebugText
+				? [
+						//
+						`spotify starfield ${pkgJSON.version}`,
+						`${this.fps.toFixed(2)}FPS. dT:${deltaT.toFixed(2)} lag:${lagModifier.toFixed(2)}`,
+						`${this.canvas.width}x${this.canvas.height} (${window.innerWidth}x${window.innerHeight}@${this.scale}). XS: ${this.xs}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}.`,
+						`${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines,`,
+						`WarpSpeed:${this.warpSpeed}`,
+						`Rotation ${this.rotSpeed} = ${this.rot.toFixed(1)}°`,
+						`StarSpeed: ${this.options.starMinSpeed}-${this.options.starMaxSpeed}. WorldSpeed: ${this.actualWorldSpeed}/${this.options.worldSpeed}. StarRadii: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}.`,
+						`SpawnArea. Radius: ${this.spawnRadius}. spawnStars: ${this.nStarsInSpawn}. cSpawnStars: ${this.nConnectionStarsInSpawn}/${this.alwaysHaveThisManyConnectionStarsInSpawn}. lastTick: ${this.lastSpawnTick}`,
+						`0: ${this.nSpawn0.toString().padStart(2, "0")}. 1: ${this.nSpawn1.toString().padStart(2, "0")}. 2: ${this.nSpawn2.toString().padStart(2, "0")}. 3: ${this.nSpawn3.toString().padStart(2, "0")}.`,
+				  ]
+				: [`spotify starfield ${pkgJSON.version}. ${this.fps.toFixed(2)}FPS.`, "Press F1 for full debug text."]
 			for (let i = 0; i < lines.length; i++) {
 				if (!lines[i]) continue
 				this.ctx.fillText(`${lines[i]}`, 24, 24 + (pad + (i + 1) * 12))
