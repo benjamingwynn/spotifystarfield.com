@@ -482,7 +482,7 @@ export default class Starfield extends XCanvas {
 	}
 
 	private get alwaysHaveThisManyConnectionStarsInSpawn() {
-		return Math.floor(this.spawnRadius / 12)
+		return Math.floor(this.spawnRadius / (this.connectionRadiusProduct * 10))
 	}
 
 	public spawnTick() {
