@@ -37,7 +37,7 @@ class StarfieldOptions {
 	/** Size around the canvas in pixels where stars will start to fade out. */
 	edgeSize = 400
 	/** Number of stars per pixels on the screen */
-	starPopulationDensity = 0.000055
+	starPopulationDensity = 0.000045
 	/** Whether debug information should be drawn on the screen. */
 	drawDebug = false
 	drawDebugText = false
