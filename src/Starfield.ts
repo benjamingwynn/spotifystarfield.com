@@ -1,5 +1,6 @@
 /** @format */
 
+const pkgJSON = require("../package.json")
 import XCanvas from "./XCanvas"
 import {$} from "./Utility"
 
@@ -36,9 +37,10 @@ class StarfieldOptions {
 	/** Size around the canvas in pixels where stars will start to fade out. */
 	edgeSize = 400
 	/** Number of stars per pixels on the screen */
-	starPopulationDensity = 0.000045
+	starPopulationDensity = 0.000055
 	/** Whether debug information should be drawn on the screen. */
 	drawDebug = false
+	drawDebugText = false
 	/** The minimum speed a star can be spawned with. */
 	starMinSpeed = 1.2
 	/** The maximum speed the star can be spawned with. */
@@ -48,7 +50,7 @@ class StarfieldOptions {
 	/** The rate the world speed changes at */
 	worldSpeedSpeed = 0.00065
 	/** Number of connection stars per pixel on the screen. */
-	connectionStarPopulationDensity = 0.00002
+	connectionStarPopulationDensity = 0.00000001
 	/** Whether keyboard shortcuts should be displayed on the screen. */
 	showKeyboardShortcuts = false
 	/** How fast star radii change in size when the volume of the track changes. */
@@ -60,7 +62,7 @@ class StarfieldOptions {
 
 export default class Starfield extends XCanvas {
 	maximumStarPopulation = 0
-	maxConnectionStars = 0
+	// maxConnectionStars = 0
 	connectionRadiusProduct = 1
 	connectionRadiusProductActual = 1
 	nStars = 0
@@ -76,24 +78,35 @@ export default class Starfield extends XCanvas {
 	rot = 1
 	rotSpeed = 0.0
 	spawnRadius = 400
+	nStarsInSpawn = 0
 
 	private lightMode = false
 	public printErrors: string[] = []
+	nConnectionStarsInSpawn: any
+	lastSpawnTick: number
+	nSpawn0: number = 0
+	nSpawn1: number = 0
+	nSpawn2: number = 0
+	nSpawn3: number = 0
+
+	get maxConnectionStars() {
+		const tpx = this.canvas.width * this.canvas.height
+		return Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity * this.spawnRadius))
+	}
 
 	layout() {
 		super.layout()
 		const tpx = this.canvas.width * this.canvas.height
-		this.maxConnectionStars = Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity))
-		this.maximumStarPopulation = Math.max(50, Math.floor(tpx * this.options.starPopulationDensity))
+		// this.maxConnectionStars = Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity * this.spawnRadius))
+		this.maximumStarPopulation = Math.max(75, Math.floor(tpx * this.options.starPopulationDensity))
 	}
 
 	private secretKeyboardShortcuts(e: {key: string}) {
 		const opt = this.options
 
-		if (e.key === "F1") opt.showKeyboardShortcuts = !opt.showKeyboardShortcuts
-
 		// Draw the debugging options
 		if (e.key === "d") opt.drawDebug = !opt.drawDebug
+		if (e.key === "F1") opt.drawDebugText = !opt.drawDebugText
 
 		// Hide the player UI
 		if (e.key === "h") {
@@ -367,17 +380,30 @@ export default class Starfield extends XCanvas {
 			this.ctx.restore()
 		}
 
-		if (this.options.showKeyboardShortcuts || this.options.drawDebug || this.printErrors.length) {
+		if (this.options.showKeyboardShortcuts || this.options.drawDebugText || this.printErrors.length) {
 			this.ctx.font = "12px monospace"
 			this.ctx.fillStyle = "grey"
 		}
 
-		if (this.options.drawDebug) {
-			this.ctx.fillText(`${this.canvas.width}x${this.canvas.height}@${this.scale} at ~${this.fps.toFixed(2)}FPS. ${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines, spawning with speeds ${this.options.starMinSpeed}-${this.options.starMaxSpeed} (world: ${this.actualWorldSpeed}/${this.options.worldSpeed}). size: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}`, 24, this.canvas.height / 2 + 24)
-			this.ctx.fillText(`WARP:${this.warpSpeed} SPAWN:${this.spawnRadius}`, 24, this.canvas.height / 2 + 12)
-			this.ctx.fillText(`dT:${deltaT.toFixed(2)} lag:${lagModifier.toFixed(2)}`, 24, this.canvas.height / 2 + 48)
-			this.ctx.fillText(`Rotation ${this.rotSpeed} = ${this.rot.toFixed(1)}`, 24, this.canvas.height / 2 + 64)
-			//  ROT:${this.rot.toFixed(2)} ROTSPEED:${this.rotSpeed}
+		if (this.options.drawDebugText) {
+			const pad = (this.canvas.height - window.innerHeight) / 2
+			const lines: string[] = [
+				//
+				`spotify starfield ${pkgJSON.version}`,
+				`${this.fps.toFixed(2)}FPS. dT:${deltaT.toFixed(2)} lag:${lagModifier.toFixed(2)}`,
+				`${this.canvas.width}x${this.canvas.height} (${window.innerWidth}x${window.innerHeight}@${this.scale}). XS: ${this.xs}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}.`,
+				`${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines,`,
+				`WarpSpeed:${this.warpSpeed}`,
+				`Rotation ${this.rotSpeed} = ${this.rot.toFixed(1)}°`,
+				`StarSpeed: ${this.options.starMinSpeed}-${this.options.starMaxSpeed}. WorldSpeed: ${this.actualWorldSpeed}/${this.options.worldSpeed}. StarRadii: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}.`,
+				`SpawnArea. Radius: ${this.spawnRadius}. spawnStars: ${this.nStarsInSpawn}. cSpawnStars: ${this.nConnectionStarsInSpawn}/${this.alwaysHaveThisManyConnectionStarsInSpawn}. lastTick: ${this.lastSpawnTick}`,
+				`0: ${this.nSpawn0.toString().padStart(2, "0")}. 1: ${this.nSpawn1.toString().padStart(2, "0")}. 2: ${this.nSpawn2.toString().padStart(2, "0")}. 3: ${this.nSpawn3.toString().padStart(2, "0")}.`,
+			] as const
+			for (let i = 0; i < lines.length; i++) {
+				if (!lines[i]) continue
+				this.ctx.fillText(`${lines[i]}`, 24, 24 + (pad + (i + 1) * 12))
+			}
+			//  ROT:${this.rot.toFixed(2)} RdOTSPEED:${this.rotSpeed}
 		}
 
 		$(".logger-log").innerText = this.printErrors.join("\n")
@@ -402,7 +428,10 @@ export default class Starfield extends XCanvas {
 	}
 
 	private generateStarSpeed(max = this.options.starMaxSpeed, min = this.options.starMinSpeed) {
-		const number = Math.floor(Math.random() * max) + min
+		// const number = Math.floor(Math.random() * max) + min
+
+		// ?
+		const number = Math.random() * (max + Math.abs(min)) + min
 		return Math.random() > 0.5 ? number : -number
 	}
 
@@ -445,18 +474,36 @@ export default class Starfield extends XCanvas {
 		this.addConnectionStar(this.canvas.width / 2, this.canvas.height / 2, -0, -0)
 	}
 
+	public get xs() {
+		return Math.min(this.canvas.height, this.canvas.width)
+	}
+
+	private get alwaysHaveThisManyConnectionStarsInSpawn() {
+		return Math.floor(this.spawnRadius / 12)
+	}
+
 	public spawnTick() {
-		if (this.nStars >= this.maximumStarPopulation) return
+		this.lastSpawnTick = performance.now()
 
 		if (this.nStars === 0) {
 			this.addFirstConnectionStar()
 			return
 		}
-		let nSpawned = 0
 
+		this.nStarsInSpawn = 0
+		this.nConnectionStarsInSpawn = 0
+		this.nSpawn0 = 0
+		this.nSpawn1 = 0
+		this.nSpawn2 = 0
+		this.nSpawn3 = 0
+		const connectionStarsInSpawn: Star[] = []
+
+		//
+		// count stars and grab the connection stars in spawn
+		// do not spawn in this loop!
+		//
 		for (let i = this.nStars - 1; i >= 0; i--) {
-			const star = this.stars[i]
-			if (!star) throw new Error("Expected a star in the array at this position.")
+			const star = this.stars[i] as Star
 			const px = star.px
 			const py = star.py
 
@@ -468,20 +515,48 @@ export default class Starfield extends XCanvas {
 			if (dt > this.spawnRadius) {
 				continue
 			}
-
-			if (this.nConnectionStars < this.maxConnectionStars) {
-				if (star.alpha >= 1) {
-					this.addConnectionStar(px, py)
-					nSpawned++
-				}
-			} else {
-				this.addStar(px, py)
-				// do not count non-connection stars
+			this.nStarsInSpawn += 1
+			if (isConnectionStar(star) && star.alpha >= 1) {
+				this.nConnectionStarsInSpawn++
+				connectionStarsInSpawn.push(star)
 			}
 		}
 
-		if (nSpawned === 0) {
-			this.addFirstConnectionStar()
+		//
+		// prioritize spawning in spawn area
+		//
+		for (const star of connectionStarsInSpawn) {
+			// stars in spawn
+			const px = star.px
+			const py = star.py
+
+			// spawn a connection star
+			if (this.nConnectionStarsInSpawn < this.alwaysHaveThisManyConnectionStarsInSpawn) {
+				this.addConnectionStar(px, py)
+				this.nSpawn0++
+				this.nConnectionStarsInSpawn++
+			} else if (this.nStars < this.maximumStarPopulation) {
+				this.addStar(px, py)
+				this.nSpawn1++
+			}
+		}
+
+		//
+		// populate left over slots
+		//
+		for (let i = this.nStars - 1; i >= 0; i--) {
+			const star = this.stars[i]
+			if (this.nStars < this.maximumStarPopulation) {
+				const px = star.px
+				const py = star.py
+				if (this.nConnectionStars < this.maxConnectionStars && isConnectionStar(star)) {
+					this.nSpawn2++
+					this.addConnectionStar(px, py)
+				} else {
+					this.nSpawn3++
+					this.addStar(px, py)
+				}
+			}
 		}
 	}
 
