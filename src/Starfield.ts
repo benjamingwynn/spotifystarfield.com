@@ -398,7 +398,7 @@ export default class Starfield extends XCanvas {
 				`StarSpeed: ${this.options.starMinSpeed}-${this.options.starMaxSpeed}. WorldSpeed: ${this.actualWorldSpeed}/${this.options.worldSpeed}. StarRadii: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}.`,
 				`SpawnArea. Radius: ${this.spawnRadius}. spawnStars: ${this.nStarsInSpawn}. cSpawnStars: ${this.nConnectionStarsInSpawn}/${this.alwaysHaveThisManyConnectionStarsInSpawn}. lastTick: ${this.lastSpawnTick}`,
 				`0: ${this.nSpawn0.toString().padStart(2, "0")}. 1: ${this.nSpawn1.toString().padStart(2, "0")}. 2: ${this.nSpawn2.toString().padStart(2, "0")}. 3: ${this.nSpawn3.toString().padStart(2, "0")}.`,
-			] as const
+			]
 			for (let i = 0; i < lines.length; i++) {
 				if (!lines[i]) continue
 				this.ctx.fillText(`${lines[i]}`, 24, 24 + (pad + (i + 1) * 12))
