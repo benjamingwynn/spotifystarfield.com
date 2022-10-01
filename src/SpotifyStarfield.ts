@@ -4,8 +4,8 @@ import Starfield from "./Starfield"
 import {hashFragment, $, applyTemplate} from "./Utility"
 
 class SpotifyStarfieldOptions {
-	BEAT_STRENGTH = 15
-	BEAT_RESISTANCE = 3
+	BEAT_STRENGTH = 12
+	BEAT_RESISTANCE = 1
 	BEAT_MIN_CONFIDENCE = 0.15
 	TATUM_MIN_CONFIDENCE = 0.45
 	COLORS = [
@@ -33,7 +33,7 @@ class SpotifyStarfieldOptions {
 	connectionRadiusMinProduct = 0.3
 	tempoWorldSpeed = 480
 	warpSpeedScaler = 0.005
-	spawnRadiusProduct = 2
+	spawnRadiusProduct = 3
 
 	loudnessBaselineRadii = 30
 	loudnessScaleRadii = 30
@@ -135,7 +135,7 @@ export default class SpotifyStarfield {
 		if (!this.starfield.nConnectionStars) return // bail if no connection stars
 		for (let i = 0; i < this.starfield.nConnectionStars; i++) {
 			const star = this.starfield.connectionStars[i]
-			const v = this.spotifyOptions.BEAT_STRENGTH * beat.confidence
+			const v = this.spotifyOptions.BEAT_STRENGTH * beat.confidence * this.starfield.actualWorldSpeed
 			star.extraSpeedY = this.pushSpeed * (star.vy > 0 ? v : -v) // * star.vyc
 			star.extraSpeedX = this.pushSpeed * (star.vx > 0 ? v : -v) // * star.vx
 			// console.log("beat", beat, star, star.extraSpeedY)
@@ -148,13 +148,25 @@ export default class SpotifyStarfield {
 	}
 
 	private newSection(section: SpotifySection) {
+		console.log("New section", section)
 		const {connectionRadiusMinProduct, loudnessBaseline, loudnessExtra, loudnessScale, pushSpeedMax, pushSpeedMin, rotSpeedTempoDiv, spawnRadiusProduct, tempoWorldSpeed, warpSpeedScaler} = this.spotifyOptions
-		this.starfield.options.worldSpeed = section.tempo / tempoWorldSpeed
 		this.starfield.pallette = this.spotifyOptions.COLORS[section.key]
-		this.pushSpeed = Math.min(pushSpeedMax, Math.max(pushSpeedMin, Math.abs(-(section.loudness + loudnessExtra) - loudnessBaseline) / loudnessScale))
+		const doWarp = Number(section.loudness < -3 && (section.tempo < 90 || (section.tempo > 90 && section.loudness < -9)))
+		this.starfield.options.worldSpeed = doWarp ? section.tempo / tempoWorldSpeed : (section.tempo / tempoWorldSpeed) * 2
+		this.starfield.options.warpOn = doWarp
+		this.starfield.options.spawnAlgorithm = Number(doWarp || section.tempo > 90)
+		this.starfield.extraDebugPrint = "Spotify current section: " + JSON.stringify(section, null, 4)
+		this.pushSpeed = Math.min(
+			pushSpeedMax,
+			Math.max(
+				pushSpeedMin,
+				// ...
+				(doWarp ? 1 : 1) * (Math.abs(-(section.loudness + loudnessExtra) - loudnessBaseline) / loudnessScale)
+			)
+		)
 		// console.warn("Changed section", section, this.starfield.connectionRadiusProduct, loudnessScale - section.loudness, this.pushSpeed)
 		this.starfield.warpSpeed = warpSpeedScaler / (this.pushSpeed * section.tempo) // base this on our already calculated push speed ^
-		this.starfield.spawnRadius = Math.max(window.innerHeight / 5, Math.min(window.innerHeight / 3, this.pushSpeed * section.tempo * spawnRadiusProduct))
+		this.starfield.spawnRadius = Math.max(300, this.pushSpeed * section.tempo * spawnRadiusProduct) | 0
 		this.starfield.rotSpeed = Math.sin(section.tempo / rotSpeedTempoDiv)
 	}
 
@@ -222,8 +234,6 @@ export default class SpotifyStarfield {
 		this.segment = undefined
 		this.section = undefined
 
-		console.log("All sections:", sections)
-
 		let loopID = Math.floor(Math.random() * 1024 * 1024).toString(16)
 		/** This fires every frame. It keeps `segment` and `section` in sync, and fires the `hitTatum` and `hitBeat` calls at the right time. */
 		console.log("Started spotifyBeatKeeper loop #" + loopID)
@@ -286,7 +296,7 @@ export default class SpotifyStarfield {
 
 	private async trackWatcher() {
 		try {
-			console.log("Trying to get current track status...")
+			// console.log("Trying to get current track status...")
 			const track = await this.spotify("/me/player", this.currentTrackID ? 1_000 : 30_000)
 			if (!track) {
 				$("#player").hidden = true
@@ -311,7 +321,7 @@ export default class SpotifyStarfield {
 					.toString()
 					.padStart(2, "0")
 			applyTemplate(this.$playerTime, {current, end})
-			console.log(">", current)
+			// console.log(">", current)
 
 			if (track.item.id !== this.currentTrackID) {
 				this.currentTrackID = track.item.id

@@ -30,6 +30,10 @@ function isConnectionStar(star: Star): star is ConnectionStar {
 }
 
 class StarfieldOptions {
+	spawnAlgorithm = 1
+	rotationEnabled = 1
+	warpOn = 1
+	starSpawnLimiter = 10
 	STAR_RADIUS = 1
 	/** The minimum radius a connection star can reach another star. A random number will be picked between this and `maxConnectionRadius` */
 	minConnectionRadius = 60
@@ -48,7 +52,7 @@ class StarfieldOptions {
 	/** The world speed, should scale all animations evenly. */
 	worldSpeed = 0
 	/** The rate the world speed changes at */
-	worldSpeedSpeed = 0.00065
+	worldSpeedSpeed = 0.01
 	/** Number of connection stars per pixel on the screen. */
 	connectionStarPopulationDensity = 0.00002
 	/** Whether keyboard shortcuts should be displayed on the screen. */
@@ -88,6 +92,7 @@ export default class Starfield extends XCanvas {
 	nSpawn1: number = 0
 	nSpawn2: number = 0
 	nSpawn3: number = 0
+	extraDebugPrint: string = ""
 
 	private maxConnectionStars
 	// get maxConnectionStars() {
@@ -190,7 +195,7 @@ export default class Starfield extends XCanvas {
 			if (this.actualWorldSpeed < this.options.worldSpeed) this.actualWorldSpeed += this.options.worldSpeedSpeed
 		}
 
-		let worldSpeed = this.actualWorldSpeed || 1
+		const worldSpeed = this.actualWorldSpeed || 1
 
 		if (this.connectionRadiusProduct > this.connectionRadiusProductActual) this.connectionRadiusProductActual += this.options.starPulseSpeed * worldSpeed * lagModifier
 		if (this.connectionRadiusProduct < this.connectionRadiusProductActual) this.connectionRadiusProductActual -= this.options.starPulseSpeed * worldSpeed * lagModifier
@@ -209,7 +214,7 @@ export default class Starfield extends XCanvas {
 
 			// give things that are further away from the centre a greater velocity
 			// (warp speed)
-			{
+			if (this.options.warpOn) {
 				// star.px += (star.px - cx) * this.warpSpeed
 				const zx = ((star.px - cx) / (Math.E / 20)) * this.warpSpeed
 				const zy = ((star.py - cy) / (Math.E / 20)) * this.warpSpeed
@@ -221,20 +226,20 @@ export default class Starfield extends XCanvas {
 
 			if (star.extraSpeedY || star.extraSpeedX) {
 				if (star.extraSpeedX > 0) {
-					star.extraSpeedX = Math.max(star.extraSpeedX - star.extraSpeedResistance * worldSpeed * lagModifier, 0)
+					star.extraSpeedX = Math.max(star.extraSpeedX - star.extraSpeedResistance * lagModifier, 0)
 					// star.extraSpeedX = Math.max(star.extraSpeedX, 0)
 				} else if (star.extraSpeedX < 0) {
-					star.extraSpeedX = Math.min(star.extraSpeedX + star.extraSpeedResistance * worldSpeed * lagModifier, 0)
+					star.extraSpeedX = Math.min(star.extraSpeedX + star.extraSpeedResistance * lagModifier, 0)
 				}
 
 				if (star.extraSpeedY > 0) {
-					star.extraSpeedY = Math.max(star.extraSpeedY - star.extraSpeedResistance * worldSpeed * lagModifier, 0)
+					star.extraSpeedY = Math.max(star.extraSpeedY - star.extraSpeedResistance * lagModifier, 0)
 				} else if (star.extraSpeedY < 0) {
-					star.extraSpeedY = Math.min(star.extraSpeedY + star.extraSpeedResistance * worldSpeed * lagModifier, 0)
+					star.extraSpeedY = Math.min(star.extraSpeedY + star.extraSpeedResistance * lagModifier, 0)
 				}
 
-				star.px += star.extraSpeedX * worldSpeed * lagModifier * this.direction
-				star.py += star.extraSpeedY * worldSpeed * lagModifier * this.direction
+				star.px += star.extraSpeedX * lagModifier * this.direction
+				star.py += star.extraSpeedY * lagModifier * this.direction
 			}
 
 			// ensure rounded
@@ -267,7 +272,7 @@ export default class Starfield extends XCanvas {
 		}
 
 		// rotate the canvas (rotation)
-		{
+		if (this.options.rotationEnabled) {
 			this.ctx.save()
 			const cx = this.canvas.width / 2
 			const cy = this.canvas.height / 2
@@ -281,13 +286,17 @@ export default class Starfield extends XCanvas {
 			if (this.options.drawDebug) {
 				this.ctx.strokeStyle = "red"
 				this.ctx.beginPath()
-				this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2, this.spawnRadius, 0, Math.PI * 2)
-				this.ctx.stroke()
-				this.ctx.beginPath()
 				this.ctx.moveTo(this.canvas.width / 2, this.canvas.height / 2)
 				this.ctx.lineTo(this.canvas.width / 2, this.canvas.height / 2 - this.spawnRadius)
 				this.ctx.stroke()
 			}
+		}
+
+		if (this.options.drawDebug && this.options.spawnAlgorithm === 1) {
+			this.ctx.strokeStyle = "red"
+			this.ctx.beginPath()
+			this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2, this.spawnRadius, 0, Math.PI * 2)
+			this.ctx.stroke()
 		}
 
 		//
@@ -335,7 +344,7 @@ export default class Starfield extends XCanvas {
 				if (this.connectionRadiusProduct > this.connectionRadiusProductActual) this.connectionRadiusProductActual += this.options.starPulseSpeed * worldSpeed * lagModifier
 				if (this.connectionRadiusProduct < this.connectionRadiusProductActual) this.connectionRadiusProductActual -= this.options.starPulseSpeed * worldSpeed * lagModifier
 
-				const extraRadius = Math.max(Math.abs(cx - star.px), Math.abs(cy - star.py)) / (Math.E * 175)
+				const extraRadius = this.options.warpOn ? 1 : Math.max(Math.abs(cx - star.px), Math.abs(cy - star.py)) / (Math.E * 175)
 				let radius = star.connectionRadius * Math.max(1, extraRadius)
 				radius = radius * this.connectionRadiusProductActual // * Math.max(1, Math.abs(star.px - cx) * this.warpSpeed * Math.E * 5)
 
@@ -349,6 +358,11 @@ export default class Starfield extends XCanvas {
 						const dt = Math.sqrt(dx * dx + dy * dy)
 						const alpha = getAlpha(star)
 						const lineAlpha = Math.min(star2.alpha, Math.min(alpha, Math.min(1 - dt / radius, star.connectionOpacity)))
+
+						if (this.options.drawDebug && !this.options.rotationEnabled) {
+							this.ctx.fillStyle = "white"
+							this.ctx.fillText(`vx:${star.vx.toFixed(2)} vy:${star.vy.toFixed(2)}`, star.px, star.py)
+						}
 
 						if (dt < radius + this.options.STAR_RADIUS) {
 							if (this.options.drawDebug) {
@@ -395,11 +409,13 @@ export default class Starfield extends XCanvas {
 						`${this.fps.toFixed(2)}FPS. dT:${deltaT.toFixed(2)} lag:${lagModifier.toFixed(2)}`,
 						`${this.canvas.width}x${this.canvas.height} (${window.innerWidth}x${window.innerHeight}@${this.scale}). XS: ${this.xs}. ~ops./frame: ${this.nStars * (1 + this.nConnectionStars)}.`,
 						`${this.nStars}/${this.maximumStarPopulation} stars total, including ${this.nConnectionStars}/${this.maxConnectionStars} connectors with ${this.nLines} lines,`,
-						`WarpSpeed:${this.warpSpeed}`,
-						`Rotation ${this.rotSpeed} = ${this.rot.toFixed(1)}°`,
+						`Warp: ${this.options.warpOn}. Speed:${this.warpSpeed}`,
+						`Rotation: ${this.options.rotationEnabled}. Speed: ${this.rotSpeed} = ${this.rot.toFixed(1)}°`,
 						`StarSpeed: ${this.options.starMinSpeed}-${this.options.starMaxSpeed}. WorldSpeed: ${this.actualWorldSpeed}/${this.options.worldSpeed}. StarRadii: ${this.connectionRadiusProductActual.toPrecision(2)}/${this.connectionRadiusProduct.toPrecision(2)} @ ${this.options.starPulseSpeed}.`,
-						`SpawnArea. Radius: ${this.spawnRadius}. spawnStars: ${this.nStarsInSpawn}. cSpawnStars: ${this.nConnectionStarsInSpawn}/${this.alwaysHaveThisManyConnectionStarsInSpawn}. lastTick: ${this.lastSpawnTick}`,
+						`SpawnAlgorithm #${this.options.spawnAlgorithm}. Radius: ${this.spawnRadius}. spawnStars: ${this.nStarsInSpawn}. cSpawnStars: ${this.nConnectionStarsInSpawn}/${this.alwaysHaveThisManyConnectionStarsInSpawn}. lastTick: ${this.lastSpawnTick}`,
 						`0: ${this.nSpawn0.toString().padStart(2, "0")}. 1: ${this.nSpawn1.toString().padStart(2, "0")}. 2: ${this.nSpawn2.toString().padStart(2, "0")}. 3: ${this.nSpawn3.toString().padStart(2, "0")}.`,
+						"",
+						...this.extraDebugPrint.split("\n"),
 				  ]
 				: [`spotify starfield ${pkgJSON.version}. ${this.fps.toFixed(2)}FPS.`, "Press F1 for full debug text."]
 			for (let i = 0; i < lines.length; i++) {
@@ -434,8 +450,13 @@ export default class Starfield extends XCanvas {
 		// const number = Math.floor(Math.random() * max) + min
 
 		// ?
-		const number = Math.random() * (max + Math.abs(min)) + min
-		return Math.random() > 0.5 ? number : -number
+		// const number = Math.random() * (max + Math.abs(min)) + min
+		// console.log(number)
+		// return Math.random() > 0.5 ? number : -number
+		const number = (Math.random() - 0.5) * 4
+		if (number > 0 && number < this.options.starMinSpeed) return this.options.starMinSpeed
+		if (number < 0 && number < -this.options.starMinSpeed) return -this.options.starMinSpeed
+		return number
 	}
 
 	private generateStarColor(): string {
@@ -474,7 +495,7 @@ export default class Starfield extends XCanvas {
 	}
 
 	public addFirstConnectionStar() {
-		this.addConnectionStar(this.canvas.width / 2, this.canvas.height / 2, -0, -0)
+		this.addConnectionStar(this.canvas.width / 2, this.canvas.height / 2)
 	}
 
 	public get xs() {
@@ -482,7 +503,7 @@ export default class Starfield extends XCanvas {
 	}
 
 	private get alwaysHaveThisManyConnectionStarsInSpawn() {
-		return Math.floor(this.spawnRadius / (this.connectionRadiusProduct * 10))
+		return Math.floor(this.spawnRadius / (this.connectionRadiusProduct * this.options.starSpawnLimiter))
 	}
 
 	public spawnTick() {
@@ -499,48 +520,51 @@ export default class Starfield extends XCanvas {
 		this.nSpawn1 = 0
 		this.nSpawn2 = 0
 		this.nSpawn3 = 0
-		const connectionStarsInSpawn: Star[] = []
 
 		//
 		// count stars and grab the connection stars in spawn
 		// do not spawn in this loop!
 		//
-		for (let i = this.nStars - 1; i >= 0; i--) {
-			const star = this.stars[i] as Star
-			const px = star.px
-			const py = star.py
+		if (this.options.spawnAlgorithm == 1) {
+			const connectionStarsInSpawn: Star[] = []
 
-			// distance from centre
-			const dcx = Math.abs(this.canvas.width / 2 - star.px)
-			const dcy = Math.abs(this.canvas.height / 2 - star.py)
+			for (let i = this.nStars - 1; i >= 0; i--) {
+				const star = this.stars[i] as Star
+				const px = star.px
+				const py = star.py
 
-			const dt = Math.sqrt(dcx * dcx + dcy * dcy)
-			if (dt > this.spawnRadius) {
-				continue
+				// distance from centre
+				const dcx = Math.abs(this.canvas.width / 2 - star.px)
+				const dcy = Math.abs(this.canvas.height / 2 - star.py)
+
+				const dt = Math.sqrt(dcx * dcx + dcy * dcy)
+				if (dt > this.spawnRadius) {
+					continue
+				}
+				this.nStarsInSpawn += 1
+				if (isConnectionStar(star) && star.alpha >= 1) {
+					this.nConnectionStarsInSpawn++
+					connectionStarsInSpawn.push(star)
+				}
 			}
-			this.nStarsInSpawn += 1
-			if (isConnectionStar(star) && star.alpha >= 1) {
-				this.nConnectionStarsInSpawn++
-				connectionStarsInSpawn.push(star)
-			}
-		}
 
-		//
-		// prioritize spawning in spawn area
-		//
-		for (const star of connectionStarsInSpawn) {
-			// stars in spawn
-			const px = star.px
-			const py = star.py
+			//
+			// prioritize spawning in spawn area
+			//
+			for (const star of connectionStarsInSpawn) {
+				// stars in spawn
+				const px = star.px
+				const py = star.py
 
-			// spawn a connection star
-			if (this.nConnectionStarsInSpawn < this.alwaysHaveThisManyConnectionStarsInSpawn) {
-				this.addConnectionStar(px, py)
-				this.nSpawn0++
-				this.nConnectionStarsInSpawn++
-			} else if (this.nStars < this.maximumStarPopulation) {
-				this.addStar(px, py)
-				this.nSpawn1++
+				// spawn a connection star
+				if (this.nConnectionStarsInSpawn < this.alwaysHaveThisManyConnectionStarsInSpawn) {
+					this.addConnectionStar(px, py)
+					this.nSpawn0++
+					this.nConnectionStarsInSpawn++
+				} else if (this.nStars < this.maximumStarPopulation) {
+					this.addStar(px, py)
+					this.nSpawn1++
+				}
 			}
 		}
 
@@ -584,6 +608,7 @@ export default class Starfield extends XCanvas {
 				const change = () => {
 					this.options[prop] = parseFloat($input.value)
 					$output.innerText = this.options[prop]
+					this.resize(0, 0, 0, 0)
 				}
 				if (this.options[prop] === undefined) {
 					throw new Error("Expected " + prop + " to be defined on this.options.")
