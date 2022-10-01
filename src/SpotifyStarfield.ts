@@ -347,7 +347,7 @@ export default class SpotifyStarfield {
 					if (this.starfield.printErrors.length === n) {
 						this.starfield.printErrors = []
 					}
-				}, 1500)
+				}, 750)
 			}
 		} catch (ex) {
 			this.starfield.printErrors.push("Error getting current track. Might be out of sync.")
