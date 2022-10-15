@@ -27,7 +27,7 @@ class SpotifyStarfieldOptions {
 	loudnessBaseline = 20
 	loudnessExtra = 10
 	loudnessScale = 20
-	pushSpeedMax = 1.6
+	pushSpeedMax = 1.4
 	pushSpeedMin = 0.9
 	rotSpeedTempoDiv = 360 * 2
 	connectionRadiusMinProduct = 0.3
