@@ -36,8 +36,8 @@ class StarfieldOptions {
 	starSpawnLimiter = 10
 	STAR_RADIUS = 1
 	/** The minimum radius a connection star can reach another star. A random number will be picked between this and `maxConnectionRadius` */
-	minConnectionRadius = 60
-	maxConnectionRadius = 100
+	minConnectionRadius = 30
+	maxConnectionRadius = 120
 	/** Size around the canvas in pixels where stars will start to fade out. */
 	edgeSize = 400
 	/** Number of stars per pixels on the screen */
@@ -46,9 +46,9 @@ class StarfieldOptions {
 	drawDebug = false
 	drawDebugText = false
 	/** The minimum speed a star can be spawned with. */
-	starMinSpeed = 1.2
+	starMinSpeed = 1.0
 	/** The maximum speed the star can be spawned with. */
-	starMaxSpeed = 1.7
+	starMaxSpeed = 2
 	/** The world speed, should scale all animations evenly. */
 	worldSpeed = 0
 	/** The rate the world speed changes at */
@@ -344,7 +344,7 @@ export default class Starfield extends XCanvas {
 				if (this.connectionRadiusProduct > this.connectionRadiusProductActual) this.connectionRadiusProductActual += this.options.starPulseSpeed * worldSpeed * lagModifier
 				if (this.connectionRadiusProduct < this.connectionRadiusProductActual) this.connectionRadiusProductActual -= this.options.starPulseSpeed * worldSpeed * lagModifier
 
-				const extraRadius = this.options.warpOn ? 1 : Math.max(Math.abs(cx - star.px), Math.abs(cy - star.py)) / (Math.E * 175)
+				const extraRadius = Math.max(Math.abs(cx - star.px), Math.abs(cy - star.py)) / (Math.E * 175)
 				let radius = star.connectionRadius * Math.max(1, extraRadius)
 				radius = radius * this.connectionRadiusProductActual // * Math.max(1, Math.abs(star.px - cx) * this.warpSpeed * Math.E * 5)
 
@@ -450,13 +450,14 @@ export default class Starfield extends XCanvas {
 		// const number = Math.floor(Math.random() * max) + min
 
 		// ?
-		// const number = Math.random() * (max + Math.abs(min)) + min
+		const number = Math.floor(Math.random() * (max - min + 1) + min)
+
 		// console.log(number)
-		// return Math.random() > 0.5 ? number : -number
-		const number = (Math.random() - 0.5) * 4
-		if (number > 0 && number < this.options.starMinSpeed) return this.options.starMinSpeed
-		if (number < 0 && number < -this.options.starMinSpeed) return -this.options.starMinSpeed
-		return number
+		return Math.random() > 0.5 ? number : -number
+		// const number = (Math.random() - 0.5) * 4
+		// if (number > 0 && number < this.options.starMinSpeed) return this.options.starMinSpeed
+		// if (number < 0 && number < -this.options.starMinSpeed) return -this.options.starMinSpeed
+		// return number
 	}
 
 	private generateStarColor(): string {
@@ -529,6 +530,9 @@ export default class Starfield extends XCanvas {
 			const connectionStarsInSpawn: Star[] = []
 
 			for (let i = this.nStars - 1; i >= 0; i--) {
+				if (!this.options.warpOn && this.nStarsInSpawn > 5) {
+					break
+				}
 				const star = this.stars[i] as Star
 				const px = star.px
 				const py = star.py
@@ -555,6 +559,10 @@ export default class Starfield extends XCanvas {
 				// stars in spawn
 				const px = star.px
 				const py = star.py
+
+				if (!this.options.warpOn && this.nStarsInSpawn > 5) {
+					break
+				}
 
 				// spawn a connection star
 				if (this.nConnectionStarsInSpawn < this.alwaysHaveThisManyConnectionStarsInSpawn) {

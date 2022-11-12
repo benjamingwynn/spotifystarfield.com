@@ -32,7 +32,7 @@ class SpotifyStarfieldOptions {
 	rotSpeedTempoDiv = 360 * 2
 	connectionRadiusMinProduct = 0.3
 	tempoWorldSpeed = 480
-	warpSpeedScaler = 0.005
+	warpSpeedScaler = 0.0025
 	spawnRadiusProduct = 3
 
 	loudnessBaselineRadii = 30
@@ -152,7 +152,7 @@ export default class SpotifyStarfield {
 		const {connectionRadiusMinProduct, loudnessBaseline, loudnessExtra, loudnessScale, pushSpeedMax, pushSpeedMin, rotSpeedTempoDiv, spawnRadiusProduct, tempoWorldSpeed, warpSpeedScaler} = this.spotifyOptions
 		this.starfield.pallette = this.spotifyOptions.COLORS[section.key]
 		const doWarp = Number(section.loudness < -3 && (section.tempo < 90 || (section.tempo > 90 && section.loudness < -9)))
-		this.starfield.options.worldSpeed = doWarp ? section.tempo / tempoWorldSpeed : (section.tempo / tempoWorldSpeed) * 2
+		this.starfield.options.worldSpeed = doWarp ? (section.tempo / tempoWorldSpeed) * 1.65 : (section.tempo / tempoWorldSpeed) * 2
 		this.starfield.options.warpOn = doWarp
 		this.starfield.options.spawnAlgorithm = Number(doWarp || section.tempo > 90)
 		this.starfield.extraDebugPrint = "Spotify current section: " + JSON.stringify(section, null, 4)
