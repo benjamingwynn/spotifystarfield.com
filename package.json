@@ -1,6 +1,6 @@
 {
 	"name": "spotify-starfield",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"private": "true",
 	"description": "Starfield simulation written for Spotify",
 	"main": "stars.js",
