@@ -251,24 +251,28 @@ export default class Starfield extends XCanvas {
 		// remove stars that are out of bounds
 		//
 
-		for (let i = this.nStars - 1; i >= 0; i--) {
-			const star = this.stars[i]
+		{
+			const STAR_RADIUS = this.options.STAR_RADIUS
 
-			// remove from loop if out of bounds
-			if (star.px + this.options.STAR_RADIUS > this.right || star.px - this.options.STAR_RADIUS < this.left || star.py + this.options.STAR_RADIUS > this.bottom || star.py - this.options.STAR_RADIUS < this.top) {
-				if (isConnectionStar(star)) {
-					for (let csi = this.nConnectionStars - 1; csi >= 0; csi--) {
-						if (this.connectionStars[csi] === star) {
-							this.connectionStars.splice(csi, 1)
-							continue
-						}
+			let starsToRemove = []
+			let connectionStarsToRemove = []
+
+			for (let i = this.nStars - 1; i >= 0; i--) {
+				const star = this.stars[i]
+
+				if (star.px + STAR_RADIUS > this.right || star.px - STAR_RADIUS < this.left || star.py + STAR_RADIUS > this.bottom || star.py - STAR_RADIUS < this.top) {
+					if ("connectionRadius" in star) {
+						connectionStarsToRemove.push(star)
 					}
-					this.nConnectionStars--
+					starsToRemove.push(star)
 				}
-				this.stars.splice(i, 1)
-				this.nStars--
-				continue
 			}
+
+			this.nConnectionStars -= connectionStarsToRemove.length
+			this.connectionStars = this.connectionStars.filter((star) => !connectionStarsToRemove.includes(star))
+
+			this.nStars -= starsToRemove.length
+			this.stars = this.stars.filter((star) => !starsToRemove.includes(star))
 		}
 
 		// rotate the canvas (rotation)
@@ -530,12 +534,7 @@ export default class Starfield extends XCanvas {
 			const connectionStarsInSpawn: Star[] = []
 
 			for (let i = this.nStars - 1; i >= 0; i--) {
-				if (!this.options.warpOn && this.nStarsInSpawn > 5) {
-					break
-				}
 				const star = this.stars[i] as Star
-				const px = star.px
-				const py = star.py
 
 				// distance from centre
 				const dcx = Math.abs(this.canvas.width / 2 - star.px)
@@ -559,10 +558,6 @@ export default class Starfield extends XCanvas {
 				// stars in spawn
 				const px = star.px
 				const py = star.py
-
-				if (!this.options.warpOn && this.nStarsInSpawn > 5) {
-					break
-				}
 
 				// spawn a connection star
 				if (this.nConnectionStarsInSpawn < this.alwaysHaveThisManyConnectionStarsInSpawn) {
