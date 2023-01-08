@@ -297,7 +297,7 @@ export default class SpotifyStarfield {
 	private async trackWatcher() {
 		try {
 			// console.log("Trying to get current track status...")
-			const track = await this.spotify("/me/player", this.currentTrackID ? 3_000 : 30_000)
+			const track = await this.spotify("/me/player", this.currentTrackID ? 2_800 : 30_000)
 			if (!track) {
 				$("#player").hidden = true
 				this.$noTrack.hidden = false
@@ -395,7 +395,7 @@ export default class SpotifyStarfield {
 		}
 
 		if (this.token) {
-			setInterval(() => this.trackWatcher(), 1200)
+			setInterval(() => this.trackWatcher(), 3000)
 			this.trackWatcher().then(() => {
 				$("#loading").hidden = true
 			})
