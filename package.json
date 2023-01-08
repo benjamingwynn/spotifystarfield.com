@@ -22,10 +22,10 @@
 	"homepage": "https://spotify.benjamingwynn.com",
 	"devDependencies": {
 		"inline-source-map": "^0.6.2",
-		"ts-loader": "^7.0.5",
+		"ts-loader": "^9.4.2",
 		"typescript": "^3.9.5",
-		"webpack": "^4.46.0",
-		"webpack-cli": "^3.3.11",
+		"webpack": "^5.75.0",
+		"webpack-cli": "^5.0.1",
 		"webpack-dev-server": "^4.10.1"
 	}
 }
