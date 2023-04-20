@@ -103,8 +103,8 @@ export default class Starfield extends XCanvas {
 	layout() {
 		super.layout()
 		const tpx = this.canvas.width * this.canvas.height
-		this.maxConnectionStars = Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity))
-		this.maximumStarPopulation = Math.max(75, Math.floor(tpx * this.options.starPopulationDensity))
+		this.maxConnectionStars = Math.min(140, Math.max(50, Math.floor(tpx * this.options.connectionStarPopulationDensity)))
+		this.maximumStarPopulation = Math.min(300, Math.max(75, Math.floor(tpx * this.options.starPopulationDensity)))
 	}
 
 	private secretKeyboardShortcuts(e: {key: string}) {
