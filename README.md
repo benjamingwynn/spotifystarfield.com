@@ -1,17 +1,16 @@
 # spotifystarfield.com
-Proof-of-concept music visualizer using Spotify's Analytics API and Canvas.
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/f279e555-c275-4e08-8503-57e01777522a/deploy-status)](https://app.netlify.com/sites/spotifystarfield/deploys)
+This project is dead. Spotify killed it.
 
-## Note about code quality & performance
+Spotify killed this project in two world-breaking ways:
 
-The rendering code here is particularly poor quality. This is designed as a proof of concept, and not to be taken as an example of how to do something like this.
+- Revoking my API key after already being a public accessible application, and not reinstating it after repeatedly reaching out.
+- Silently [removing the audio analytics API endpoint](https://community.spotify.com/t5/Spotify-for-Developers/Changes-to-Web-API/td-p/6540414/), which this required to work.
 
-## Future planned impovements
+**Because of this experience, I'd strongly recommend nobody else ever write an application that integrates into Spotify.**
 
-- Decouple physics and rendering code.
-- Improve rendering code, maybe use WebGL?
-- Improve physics code, maybe use WASM?
-- Fix Spotify login redirecting out of fullscreen
-- Port to Svelte
-- Remove stuff that shouldn't be in the Starfield class (like UI modifications) 
+So this no longer works, and will likely never work again, but I'll keep the code hosted here for posterity. 
+
+Thanks to Tommy W for all his help and suggestions.
+
+Benjamin ✌️
